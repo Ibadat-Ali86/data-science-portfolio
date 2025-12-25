@@ -7,7 +7,7 @@
 [![Kaggle](https://img.shields.io/badge/Kaggle-Notebook-orange.svg)](https://www.kaggle.com/code/ibadatali/pakistan-ecommerce-price-reggression)
 [![R² Score](https://img.shields.io/badge/R²-0.92-success.svg)]()
 
-https://github.com/user-attachments/assets/5835c47b-d02d-4073-a834-c5e3579d3e67
+[https://github.com/user-attachments/assets/5835c47b-d02d-4073-a834-c5e3579d3e67](https://github.com/user-attachments/assets/aacd4920-4852-487e-ba7f-41e3ec5676de)
 
 > **Predict e-commerce product unit prices with 92% accuracy using Random Forest Regression. Deployed as a production-ready web application with real-time predictions.**
 
