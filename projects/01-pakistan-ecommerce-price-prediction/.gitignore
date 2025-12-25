@@ -67,3 +67,5 @@ htmlcov/
 # Kaggle
 .kaggle/
 
+random_forest_price_model.pkl
+*.pkl
