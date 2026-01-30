@@ -1,0 +1,8 @@
+streamlit
+google-genai
+pillow
+python-dotenv
+pandas
+numpy
+flask
+flask-cors

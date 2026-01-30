@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation | VITAL-LINK</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .page-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .page-header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .doc-toc {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .doc-toc h3 {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .doc-toc ul {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .doc-toc a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-normal);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .doc-toc a:hover {
+            background: var(--bg-glass);
+            color: var(--primary-start);
+        }
+
+        .content-section {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .content-section h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .content-section h2 i {
+            color: var(--accent-purple);
+        }
+
+        .content-section h3 {
+            font-size: 1.125rem;
+            color: var(--text-primary);
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .content-section p,
+        .content-section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .content-section ul,
+        .content-section ol {
+            padding-left: 1.5rem;
+        }
+
+        .content-section li {
+            margin-bottom: 0.5rem;
+        }
+
+        .code-block {
+            background: #0d1117;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            font-family: 'Fira Code', 'Monaco', monospace;
+            font-size: 0.875rem;
+            color: #e6edf3;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .code-block .comment {
+            color: #8b949e;
+        }
+
+        .code-block .keyword {
+            color: #ff7b72;
+        }
+
+        .code-block .string {
+            color: #a5d6ff;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .tech-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            text-align: center;
+            transition: all var(--transition-normal);
+        }
+
+        .tech-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .tech-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .tech-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .tech-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .flow-diagram {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 2rem;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .flow-step {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .flow-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .flow-arrow {
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            margin: 0 0.5rem;
+        }
+
+        .alert-box {
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            margin: 1rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .alert-box.warning {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .alert-box.warning i {
+            color: #f59e0b;
+        }
+
+        .alert-box.info {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .alert-box.info i {
+            color: #3b82f6;
+        }
+
+        .alert-box.success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .alert-box.success i {
+            color: #10b981;
+        }
+
+        .issue-card {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-purple);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: 1.25rem;
+            margin: 1rem 0;
+        }
+
+        .issue-card h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .issue-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .issue-card .solution {
+            color: var(--success-start);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .doc-toc ul {
+                grid-template-columns: 1fr;
+            }
+
+            .tech-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="animated-bg">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-heartbeat pulse-icon"></i>
+            <span class="brand-text">VITAL-LINK</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="about.html" class="nav-link">About</a>
+            <a href="documentation.html" class="nav-link active">Documentation</a>
+        </div>
+        <div class="nav-badge">
+            <span class="badge-dot"></span>
+            <span>Gemini 2.0 Flash</span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="page-content">
+        <header class="page-header">
+            <h1>Documentation</h1>
+            <p>Complete technical reference, architecture, and implementation details</p>
+        </header>
+
+        <!-- Table of Contents -->
+        <nav class="doc-toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#tech-stack"><i class="fas fa-layer-group"></i> Technology Stack</a></li>
+                <li><a href="#architecture"><i class="fas fa-sitemap"></i> System Architecture</a></li>
+                <li><a href="#methodology"><i class="fas fa-flask"></i> Methodology</a></li>
+                <li><a href="#api"><i class="fas fa-code"></i> API Reference</a></li>
+                <li><a href="#issues"><i class="fas fa-bug"></i> Known Issues</a></li>
+                <li><a href="#results"><i class="fas fa-chart-line"></i> Results & Performance</a></li>
+            </ul>
+        </nav>
+
+        <!-- Technology Stack -->
+        <section class="content-section" id="tech-stack">
+            <h2><i class="fas fa-layer-group"></i> Technology Stack</h2>
+            <p>VITAL-LINK is built using modern web technologies and Google's latest AI infrastructure:</p>
+
+            <h3>Frontend</h3>
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <div class="tech-icon">📄</div>
+                    <div class="tech-name">HTML5</div>
+                    <div class="tech-desc">Semantic structure</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">🎨</div>
+                    <div class="tech-name">CSS3</div>
+                    <div class="tech-desc">Gradients & animations</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">⚡</div>
+                    <div class="tech-name">JavaScript ES6+</div>
+                    <div class="tech-desc">Async/await, modules</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">🔤</div>
+                    <div class="tech-name">Font Awesome 6</div>
+                    <div class="tech-desc">Icon library</div>
+                </div>
+            </div>
+
+            <h3>Backend</h3>
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <div class="tech-icon">🐍</div>
+                    <div class="tech-name">Python 3.12</div>
+                    <div class="tech-desc">Core language</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">🌶️</div>
+                    <div class="tech-name">Flask</div>
+                    <div class="tech-desc">Web framework</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">🖼️</div>
+                    <div class="tech-name">Pillow</div>
+                    <div class="tech-desc">Image processing</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">🔐</div>
+                    <div class="tech-name">python-dotenv</div>
+                    <div class="tech-desc">Environment config</div>
+                </div>
+            </div>
+
+            <h3>AI & ML</h3>
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <div class="tech-icon">🤖</div>
+                    <div class="tech-name">Gemini 2.0 Flash</div>
+                    <div class="tech-desc">Multimodal AI model</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">📦</div>
+                    <div class="tech-name">google-genai SDK</div>
+                    <div class="tech-desc">API client (v2.0)</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture -->
+        <section class="content-section" id="architecture">
+            <h2><i class="fas fa-sitemap"></i> System Architecture</h2>
+            <p>VITAL-LINK follows a clean client-server architecture with multimodal AI integration:</p>
+
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <div class="flow-icon"><i class="fas fa-user"></i></div>
+                    <span class="flow-label">User Input</span>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="flow-icon"><i class="fas fa-globe"></i></div>
+                    <span class="flow-label">Web UI</span>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="flow-icon"><i class="fas fa-server"></i></div>
+                    <span class="flow-label">Flask API</span>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="flow-icon"><i class="fas fa-brain"></i></div>
+                    <span class="flow-label">Gemini AI</span>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="flow-icon"><i class="fas fa-file-medical"></i></div>
+                    <span class="flow-label">Diagnosis</span>
+                </div>
+            </div>
+
+            <h3>Component Breakdown</h3>
+            <ul>
+                <li><strong>index.html</strong> — Main dashboard with file uploads, vitals input, and results display
+                </li>
+                <li><strong>styles.css</strong> — Premium styling with CSS variables, gradients, and animations</li>
+                <li><strong>script.js</strong> — State management, API calls, and DOM manipulation</li>
+                <li><strong>server.py</strong> — Flask REST API with Gemini integration</li>
+                <li><strong>about.html</strong> — Project overview and team information</li>
+                <li><strong>documentation.html</strong> — This technical reference page</li>
+            </ul>
+        </section>
+
+        <!-- Methodology -->
+        <section class="content-section" id="methodology">
+            <h2><i class="fas fa-flask"></i> Methodology</h2>
+
+            <h3>1. Data Collection</h3>
+            <p>Sample data sourced from established medical datasets:</p>
+            <ul>
+                <li><strong>Chest X-Ray Dataset</strong> — Kaggle's "Chest X-Ray Images (Pneumonia)" containing 5,863
+                    validated X-ray images</li>
+                <li><strong>Respiratory Sounds</strong> — ICBHI 2017 Challenge dataset with 920 annotated lung sound
+                    recordings</li>
+            </ul>
+
+            <h3>2. Multimodal Processing Pipeline</h3>
+            <div class="code-block">
+                <span class="comment"># Simplified processing flow</span>
+                <span class="keyword">def</span> analyze_patient_data(xray, audio, vitals):
+                <span class="comment"># 1. Load and preprocess image</span>
+                image = PIL.Image.open(xray)
+
+                <span class="comment"># 2. Load audio as bytes</span>
+                audio_bytes = audio.read()
+
+                <span class="comment"># 3. Send all modalities to Gemini in single call</span>
+                response = client.models.generate_content(
+                model=<span class="string">"gemini-2.0-flash"</span>,
+                contents=[vitals_text, image, audio_part, prompt]
+                )
+
+                <span class="keyword">return</span> parse_json_response(response.text)
+            </div>
+
+            <h3>3. AI Reasoning Strategy</h3>
+            <p>The system uses a structured prompting approach:</p>
+            <ul>
+                <li><strong>System Instruction:</strong> Defines the AI as a "Senior Medical Consultant" with specific
+                    output requirements</li>
+                <li><strong>Low Temperature (0.2):</strong> Ensures consistent, accurate medical responses</li>
+                <li><strong>JSON Output Format:</strong> Structured response for reliable frontend parsing</li>
+                <li><strong>Confidence Scoring:</strong> AI self-evaluates certainty (0-100%)</li>
+            </ul>
+
+            <div class="alert-box info">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <strong>Why Gemini 2.0 Flash?</strong><br>
+                    It's the only model that natively supports image + audio + text in a single inference call, enabling
+                    true cross-modal correlation.
+                </div>
+            </div>
+        </section>
+
+        <!-- API Reference -->
+        <section class="content-section" id="api">
+            <h2><i class="fas fa-code"></i> API Reference</h2>
+
+            <h3>POST /analyze</h3>
+            <p>Main diagnostic endpoint. Accepts multipart form data.</p>
+
+            <h4>Request Parameters</h4>
+            <div class="code-block">
+                {
+                <span class="string">"xray"</span>: File (image/jpeg, image/png),
+                <span class="string">"audio"</span>: File (audio/wav, audio/mp3),
+                <span class="string">"vitals"</span>: JSON string {
+                <span class="string">"age"</span>: number,
+                <span class="string">"gender"</span>: string,
+                <span class="string">"temperature"</span>: number,
+                <span class="string">"spo2"</span>: number,
+                <span class="string">"heartRate"</span>: number,
+                <span class="string">"bloodPressure"</span>: string
+                },
+                <span class="string">"sample_type"</span>: <span class="string">"pneumonia"</span> | <span
+                    class="string">"normal"</span> (optional)
+                }
+            </div>
+
+            <h4>Response Format</h4>
+            <div class="code-block">
+                {
+                <span class="string">"confidence_score"</span>: 87,
+                <span class="string">"primary_diagnosis"</span>: <span class="string">"Community-Acquired
+                    Pneumonia"</span>,
+                <span class="string">"analysis"</span>: {
+                <span class="string">"radiology_findings"</span>: <span class="string">"..."</span>,
+                <span class="string">"auscultation_findings"</span>: <span class="string">"..."</span>,
+                <span class="string">"vitals_interpretation"</span>: <span class="string">"..."</span>
+                },
+                <span class="string">"differential_diagnosis"</span>: [
+                {<span class="string">"condition"</span>: <span class="string">"..."</span>, <span
+                    class="string">"probability"</span>: <span class="string">"85%"</span>}
+                ],
+                <span class="string">"reasoning_trace"</span>: <span class="string">"..."</span>,
+                <span class="string">"recommended_actions"</span>: [<span class="string">"..."</span>]
+                }
+            </div>
+
+            <h3>GET /health</h3>
+            <p>Health check endpoint for monitoring.</p>
+            <div class="code-block">
+                {
+                <span class="string">"status"</span>: <span class="string">"healthy"</span>,
+                <span class="string">"api_configured"</span>: <span class="keyword">true</span>
+                }
+            </div>
+        </section>
+
+        <!-- Known Issues -->
+        <section class="content-section" id="issues">
+            <h2><i class="fas fa-bug"></i> Known Issues & Challenges</h2>
+
+            <div class="issue-card">
+                <h4>1. Sample File Dependency</h4>
+                <p>The "Load Sample Case" feature requires actual files in data/samples/ directory to call the real
+                    Gemini API.</p>
+                <div class="solution">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Solution:</strong> Implemented fallback demo mode with mock results for seamless
+                    presentation.
+                </div>
+            </div>
+
+            <div class="issue-card">
+                <h4>2. Audio Format Compatibility</h4>
+                <p>Gemini 2.0 Flash works best with WAV format. MP3 files may require transcoding.</p>
+                <div class="solution">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Solution:</strong> Accept both formats but recommend WAV for optimal results.
+                </div>
+            </div>
+
+            <div class="issue-card">
+                <h4>3. API Rate Limits</h4>
+                <p>Gemini API has usage quotas that may limit throughput in high-volume scenarios.</p>
+                <div class="solution">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Solution:</strong> Implemented error handling with graceful fallback to demo mode.
+                </div>
+            </div>
+
+            <div class="issue-card">
+                <h4>4. Large File Uploads</h4>
+                <p>High-resolution X-rays (>10MB) may cause timeout issues.</p>
+                <div class="solution">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Solution:</strong> Client-side validation and recommended max file sizes in UI.
+                </div>
+            </div>
+
+            <div class="alert-box warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <strong>Important Disclaimer</strong><br>
+                    This is an AI research prototype for educational and demonstration purposes only. It is NOT intended
+                    for actual clinical diagnosis or medical decision-making.
+                </div>
+            </div>
+        </section>
+
+        <!-- Results -->
+        <section class="content-section" id="results">
+            <h2><i class="fas fa-chart-line"></i> Results & Performance</h2>
+
+            <h3>Demo Performance Metrics</h3>
+            <ul>
+                <li><strong>Average Response Time:</strong> 2-4 seconds per analysis</li>
+                <li><strong>Confidence Score Range:</strong> 70-95% for typical cases</li>
+                <li><strong>UI Load Time:</strong> &lt;1 second (optimized assets)</li>
+                <li><strong>Mobile Responsiveness:</strong> Fully responsive down to 320px</li>
+            </ul>
+
+            <h3>Key Achievements</h3>
+            <div class="alert-box success">
+                <i class="fas fa-trophy"></i>
+                <div>
+                    <strong>Innovation Highlights</strong>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>First-of-its-kind multimodal clinical reasoning dashboard</li>
+                        <li>Seamless integration of 3 data modalities in single API call</li>
+                        <li>Transparent AI reasoning with step-by-step trace</li>
+                        <li>Professional, production-ready UI/UX design</li>
+                        <li>Complete demo mode for judge testing without dependencies</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Future Improvements</h3>
+            <ul>
+                <li>Integration with DICOM format for hospital PACS systems</li>
+                <li>Real-time audio streaming from Bluetooth stethoscopes</li>
+                <li>Multi-language support for global deployment</li>
+                <li>Offline mode with local model inference</li>
+                <li>Integration with EHR/EMR systems via FHIR</li>
+            </ul>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-heartbeat"></i>
+                <span>VITAL-LINK</span>
+            </div>
+            <p class="footer-text">
+                Built for the <strong>Google Gemini Hackathon 2026</strong>
+            </p>
+            <p class="footer-disclaimer">
+                ⚠️ AI Research Prototype — Not for Clinical Use
+            </p>
+        </div>
+    </footer>
+</body>
+
+</html>

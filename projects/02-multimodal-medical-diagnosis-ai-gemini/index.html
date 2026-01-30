@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VITAL-LINK | AI Medical Diagnosis</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+    <!-- Disclaimer Banner -->
+    <div class="disclaimer-banner" id="disclaimer-banner">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span class="disclaimer-text">⚠️ RESEARCH PROTOTYPE ONLY — Not FDA-cleared — Not for clinical
+            decision-making</span>
+        <button class="disclaimer-close" onclick="document.getElementById('disclaimer-banner').style.display='none'">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Video Background -->
+    <div class="video-background">
+        <video autoplay muted loop playsinline id="bg-video">
+            <source src="38719-422630815.mp4" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+
+    <!-- Animated Background Orbs -->
+    <div class="animated-bg">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-heartbeat pulse-icon"></i>
+            <span class="brand-text">VITAL-LINK</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link active">Dashboard</a>
+            <a href="about.html" class="nav-link">About</a>
+            <a href="documentation.html" class="nav-link">Documentation</a>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <div class="mode-toggle" id="mode-toggle" onclick="toggleClinicalMode()">
+                <span class="mode-toggle-label">Clinical</span>
+                <div class="mode-toggle-switch"></div>
+            </div>
+            <div class="nav-badge">
+                <span class="badge-dot"></span>
+                <span>Gemini 2.0 Flash</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Header Section -->
+        <header class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="gradient-text">Multimodal Clinical</span>
+                    <br>Risk Assessment Dashboard
+                </h1>
+                <p class="hero-subtitle">
+                    AI-powered risk scoring correlating X-rays, lung sounds, and vital signs
+                </p>
+            </div>
+        </header>
+
+        <!-- Quick Load Section -->
+        <section class="sample-cases-section">
+            <h2 class="section-title"><i class="fas fa-folder-open"></i> Quick Load Sample Cases</h2>
+            <p class="section-subtitle">Select a condition to load sample X-ray and lung audio data</p>
+            <div class="sample-buttons-grid">
+                <!-- Row 1: Critical Conditions -->
+                <button class="sample-btn pneumonia-btn" onclick="loadSampleCase('pneumonia')">
+                    <div class="btn-icon"><i class="fas fa-lungs-virus"></i></div>
+                    <div class="btn-content">
+                        <span class="btn-title">Pneumonia</span>
+                        <span class="btn-desc">Bacterial/Viral infection</span>
+                    </div>
+                </button>
+                <button class="sample-btn copd-btn" onclick="loadSampleCase('copd')">
+                    <div class="btn-icon"><i class="fas fa-smoking"></i></div>
+                    <div class="btn-content">
+                        <span class="btn-title">COPD</span>
+                        <span class="btn-desc">Chronic obstructive</span>
+                    </div>
+                </button>
+                <button class="sample-btn asthma-btn" onclick="loadSampleCase('asthma')">
+                    <div class="btn-icon"><i class="fas fa-wind"></i></div>
+                    <div class="btn-content">
+                        <span class="btn-title">Asthma</span>
+                        <span class="btn-desc">Airway inflammation</span>
+                    </div>
+                </button>
+                <button class="sample-btn normal-btn" onclick="loadSampleCase('healthy')">
+                    <div class="btn-icon"><i class="fas fa-heart"></i></div>
+                    <div class="btn-content">
+                        <span class="btn-title">Healthy</span>
+                        <span class="btn-desc">Normal lung sounds</span>
+                    </div>
+                </button>
+                <!-- Row 2: Other Conditions -->
+                <button class="sample-btn bronchiectasis-btn" onclick="loadSampleCase('bronchiectasis')">
+                    <div class="btn-icon"><i class="fas fa-lungs"></i></div>
+                    <div class="btn-content">
+                        <span class="btn-title">Bronchiectasis</span>
+                        <span class="btn-desc">Airway dilation</span>
+                    </div>
+                </button>
+                <button class="sample-btn bronchiolitis-btn" onclick="loadSampleCase('bronchiolitis')">
+                    <div class="btn-icon"><i class="fas fa-baby"></i></div>
+                    <div class="btn-content">
+                        <span class="btn-title">Bronchiolitis</span>
+                        <span class="btn-desc">Pediatric condition</span>
+                    </div>
+                </button>
+                <button class="sample-btn urti-btn" onclick="loadSampleCase('urti')">
+                    <div class="btn-icon"><i class="fas fa-head-side-cough"></i></div>
+                    <div class="btn-content">
+                        <span class="btn-title">URTI</span>
+                        <span class="btn-desc">Upper respiratory</span>
+                    </div>
+                </button>
+                <button class="sample-btn lrti-btn" onclick="loadSampleCase('lrti')">
+                    <div class="btn-icon"><i class="fas fa-virus"></i></div>
+                    <div class="btn-content">
+                        <span class="btn-title">LRTI</span>
+                        <span class="btn-desc">Lower respiratory</span>
+                    </div>
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Panel - Inputs -->
+            <section class="panel input-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-user-md"></i> Patient Information</h3>
+                </div>
+                <div class="panel-content">
+                    <!-- Vitals Form -->
+                    <div class="form-group">
+                        <label class="form-label">Patient Age</label>
+                        <div class="slider-container">
+                            <input type="range" id="age" min="0" max="100" value="45" class="custom-slider">
+                            <span class="slider-value" id="age-value">45 years</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Gender</label>
+                        <div class="select-wrapper">
+                            <select id="gender" class="custom-select">
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="vitals-grid">
+                        <div class="vital-card" id="vital-card-temp">
+                            <div class="vital-status-badge" id="status-temp" style="display:none;"></div>
+                            <div class="vital-icon temp"><i class="fas fa-thermometer-half"></i></div>
+                            <input type="number" id="temperature" value="37.5" step="0.1" class="vital-input"
+                                onchange="validateVitals()">
+                            <span class="vital-label">Temp (°C)</span>
+                            <span class="vital-range-hint">Normal: 36.1-37.2°C</span>
+                        </div>
+                        <div class="vital-card" id="vital-card-spo2">
+                            <div class="vital-status-badge" id="status-spo2" style="display:none;"></div>
+                            <div class="vital-icon spo2"><i class="fas fa-lungs"></i></div>
+                            <input type="number" id="spo2" value="95" class="vital-input" onchange="validateVitals()">
+                            <span class="vital-label">SpO2 (%)</span>
+                            <span class="vital-range-hint">Normal: 95-100%</span>
+                        </div>
+                        <div class="vital-card" id="vital-card-hr">
+                            <div class="vital-status-badge" id="status-hr" style="display:none;"></div>
+                            <div class="vital-icon hr"><i class="fas fa-heartbeat"></i></div>
+                            <input type="number" id="heartrate" value="80" class="vital-input"
+                                onchange="validateVitals()">
+                            <span class="vital-label">HR (bpm)</span>
+                            <span class="vital-range-hint">Normal: 60-100 bpm</span>
+                        </div>
+                        <div class="vital-card" id="vital-card-bp">
+                            <div class="vital-status-badge" id="status-bp" style="display:none;"></div>
+                            <div class="vital-icon bp"><i class="fas fa-tint"></i></div>
+                            <input type="text" id="bloodpressure" value="120/80" class="vital-input"
+                                onchange="validateVitals()">
+                            <span class="vital-label">BP (mmHg)</span>
+                            <span class="vital-range-hint">Normal: 90-120/60-80</span>
+                        </div>
+                    </div>
+
+                    <!-- File Upload Section -->
+                    <div class="upload-section">
+                        <div class="upload-box" id="xray-upload">
+                            <input type="file" id="xray-file" accept="image/*" hidden>
+                            <div class="upload-content">
+                                <div class="upload-icon"><i class="fas fa-x-ray"></i></div>
+                                <span class="upload-text">Upload Chest X-Ray</span>
+                                <span class="upload-hint">JPG, PNG up to 10MB</span>
+                            </div>
+                            <div class="upload-preview" id="xray-preview"></div>
+                        </div>
+
+                        <div class="upload-box" id="audio-upload">
+                            <input type="file" id="audio-file" accept="audio/*" hidden>
+                            <div class="upload-content">
+                                <div class="upload-icon"><i class="fas fa-microphone-alt"></i></div>
+                                <span class="upload-text">Upload Lung Sounds</span>
+                                <span class="upload-hint">WAV, MP3 up to 10MB</span>
+                            </div>
+                            <div class="upload-preview" id="audio-preview"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel - Results -->
+            <section class="panel results-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-brain"></i> AI Clinical Analysis</h3>
+                </div>
+                <div class="panel-content">
+                    <!-- Analyze Button -->
+                    <button class="analyze-btn" id="analyze-btn" onclick="runDiagnosis()">
+                        <span class="btn-text">
+                            <i class="fas fa-rocket"></i> Run Multi-Modal Diagnostic
+                        </span>
+                        <span class="btn-loader">
+                            <i class="fas fa-spinner fa-spin"></i> Analyzing...
+                        </span>
+                    </button>
+
+                    <!-- Confidence Meter -->
+                    <div class="confidence-section" id="confidence-section" style="display: none;">
+                        <div class="confidence-header">
+                            <span>AI Risk Score</span>
+                        </div>
+                        <div class="confidence-meter">
+                            <div class="confidence-value" id="confidence-value">0%</div>
+                            <div class="confidence-interval" id="confidence-interval" style="display: none;">
+                                <span>95% CI:</span>
+                                <span class="confidence-interval-range" id="confidence-range">—</span>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" id="confidence-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Risk Level + Diagnosis Result -->
+                    <div class="diagnosis-section" id="diagnosis-section" style="display: none;">
+                        <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+                            <span class="risk-level-badge" id="risk-level-badge">LOW RISK</span>
+                        </div>
+                        <div class="diagnosis-card">
+                            <div class="diagnosis-header">
+                                <i class="fas fa-stethoscope"></i>
+                                <span>Primary Finding</span>
+                            </div>
+                            <div class="diagnosis-result" id="primary-diagnosis">-</div>
+                        </div>
+                    </div>
+
+                    <!-- Feature Importance -->
+                    <div class="feature-importance-section" id="feature-importance-section" style="display: none;">
+                        <div class="feature-importance-header">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Feature Importance (What drove this assessment)</span>
+                        </div>
+                        <div id="feature-bars"></div>
+                    </div>
+
+                    <!-- Analysis Tabs -->
+                    <div class="analysis-tabs" id="analysis-tabs" style="display: none;">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" data-tab="findings">
+                                <i class="fas fa-clipboard-list"></i> Findings
+                            </button>
+                            <button class="tab-btn" data-tab="differential">
+                                <i class="fas fa-list-ol"></i> DDx
+                            </button>
+                            <button class="tab-btn" data-tab="reasoning">
+                                <i class="fas fa-brain"></i> Reasoning
+                            </button>
+                            <button class="tab-btn" data-tab="actions">
+                                <i class="fas fa-tasks"></i> Actions
+                            </button>
+                        </div>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="findings-tab">
+                                <div class="finding-item">
+                                    <h4><i class="fas fa-x-ray"></i> Radiology Findings</h4>
+                                    <p id="radiology-findings">-</p>
+                                </div>
+                                <div class="finding-item">
+                                    <h4><i class="fas fa-volume-up"></i> Auscultation Findings</h4>
+                                    <p id="auscultation-findings">-</p>
+                                </div>
+                                <div class="finding-item">
+                                    <h4><i class="fas fa-heartbeat"></i> Vitals Interpretation</h4>
+                                    <p id="vitals-interpretation">-</p>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="differential-tab">
+                                <div class="ddx-list" id="ddx-list"></div>
+                            </div>
+                            <div class="tab-pane" id="reasoning-tab">
+                                <div class="reasoning-trace" id="reasoning-trace">-</div>
+                            </div>
+                            <div class="tab-pane" id="actions-tab">
+                                <div class="actions-list" id="actions-list"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Visualization Section -->
+                    <div class="visualization-section" id="visualization-section" style="display: none;">
+                        <div class="chart-container gauge-chart-container">
+                            <div class="chart-title"><i class="fas fa-tachometer-alt"></i> Risk Score Gauge</div>
+                            <canvas id="riskGaugeChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title"><i class="fas fa-chart-bar"></i> Feature Importance</div>
+                            <canvas id="featureImportanceChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title"><i class="fas fa-project-diagram"></i> Differential Analysis</div>
+                            <canvas id="differentialChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Export Report Section -->
+                    <div class="export-section" id="export-section" style="display: none;">
+                        <button class="export-btn" id="export-pdf-btn" onclick="generateMedicalReport()">
+                            <i class="fas fa-file-pdf"></i> Export Medical Report (PDF)
+                        </button>
+                        <button class="export-btn"
+                            style="background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);"
+                            onclick="printResults()">
+                            <i class="fas fa-print"></i> Print Results
+                        </button>
+                    </div>
+
+                    <!-- Limitations Section -->
+                    <div class="limitations-section" id="limitations-section" style="display: none;">
+                        <div class="limitations-header">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Important Limitations</span>
+                        </div>
+                        <ul class="limitations-list" id="limitations-list">
+                            <li><i class="fas fa-info-circle"></i> AI analysis may miss subtle findings</li>
+                            <li><i class="fas fa-info-circle"></i> Results require clinical correlation</li>
+                            <li><i class="fas fa-info-circle"></i> Not validated for clinical decision-making</li>
+                        </ul>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="empty-state" id="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h4>Ready for Analysis</h4>
+                        <p>Upload patient data or load a sample case to begin AI-powered diagnosis</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-heartbeat"></i>
+                <span>VITAL-LINK</span>
+            </div>
+            <p class="footer-text">
+                Built for the <strong>Google Gemini Hackathon 2026</strong>
+            </p>
+            <p class="footer-disclaimer">
+                ⚠️ AI Research Prototype — Not for Clinical Use
+            </p>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="toast-message" id="toast-message">Success!</div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

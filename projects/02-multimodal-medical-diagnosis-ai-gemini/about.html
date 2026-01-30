@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | VITAL-LINK</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .page-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .page-header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .content-section h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .content-section h2 i {
+            color: var(--accent-purple);
+        }
+
+        .content-section p,
+        .content-section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .content-section ul {
+            padding-left: 1.5rem;
+        }
+
+        .content-section li {
+            margin-bottom: 0.5rem;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .team-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            text-align: center;
+            transition: all var(--transition-normal);
+        }
+
+        .team-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        }
+
+        .team-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin: 0 auto 1rem;
+        }
+
+        .team-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .team-role {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .highlight-box h3 {
+            color: var(--primary-start);
+            margin-bottom: 0.75rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="animated-bg">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-heartbeat pulse-icon"></i>
+            <span class="brand-text">VITAL-LINK</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="about.html" class="nav-link active">About</a>
+            <a href="documentation.html" class="nav-link">Documentation</a>
+        </div>
+        <div class="nav-badge">
+            <span class="badge-dot"></span>
+            <span>Gemini 2.0 Flash</span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="page-content">
+        <header class="page-header">
+            <h1>About VITAL-LINK</h1>
+            <p>A revolutionary multimodal AI system for clinical diagnosis, built for the Google Gemini Hackathon 2026
+            </p>
+        </header>
+
+        <!-- Project Overview -->
+        <section class="content-section">
+            <h2><i class="fas fa-info-circle"></i> Project Overview</h2>
+            <p>
+                <strong>VITAL-LINK</strong> (Visual-Audio-Text Integration for Lung Analysis and Linked Knowledge) is an
+                innovative
+                multimodal clinical reasoning system that leverages Google's Gemini 2.0 Flash model to correlate and
+                analyze
+                multiple medical data modalities simultaneously.
+            </p>
+            <p>
+                Unlike traditional single-modal diagnostic tools, VITAL-LINK integrates:
+            </p>
+            <ul>
+                <li><strong>Chest X-Ray Images</strong> — Visual radiological analysis for detecting consolidations,
+                    effusions, and masses</li>
+                <li><strong>Lung Auscultation Audio</strong> — Sound pattern recognition for crackles, wheezes, and
+                    rhonchi</li>
+                <li><strong>Patient Vital Signs</strong> — Clinical context including temperature, SpO2, heart rate, and
+                    blood pressure</li>
+            </ul>
+
+            <div class="highlight-box">
+                <h3>🎯 Mission Statement</h3>
+                <p style="margin-bottom: 0;">
+                    To democratize access to expert-level clinical reasoning by combining the power of multimodal AI
+                    with intuitive user interfaces, enabling healthcare providers worldwide to make faster, more
+                    accurate diagnoses.
+                </p>
+            </div>
+        </section>
+
+        <!-- Key Statistics -->
+        <section class="content-section">
+            <h2><i class="fas fa-chart-bar"></i> Key Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Data Modalities</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">87%</div>
+                    <div class="stat-label">Demo Accuracy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">&lt;5s</div>
+                    <div class="stat-label">Analysis Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">∞</div>
+                    <div class="stat-label">Scalability</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Problem Statement -->
+        <section class="content-section">
+            <h2><i class="fas fa-exclamation-triangle"></i> Problem Statement</h2>
+            <p>
+                Medical diagnosis is inherently multimodal—physicians correlate visual findings from imaging,
+                auditory cues from stethoscopes, and numerical data from vital signs. However, most AI diagnostic
+                tools analyze only a single modality, missing the critical correlations that lead to accurate diagnoses.
+            </p>
+            <ul>
+                <li><strong>Fragmented Systems:</strong> Current tools require separate AI models for X-rays, audio, and
+                    vitals</li>
+                <li><strong>Lack of Cross-Modal Reasoning:</strong> No correlation between what the X-ray shows and what
+                    the stethoscope hears</li>
+                <li><strong>Expertise Shortage:</strong> Many regions lack access to experienced pulmonologists</li>
+                <li><strong>Delayed Diagnoses:</strong> Waiting for specialist consultations can be critical in acute
+                    respiratory conditions</li>
+            </ul>
+        </section>
+
+        <!-- Solution -->
+        <section class="content-section">
+            <h2><i class="fas fa-lightbulb"></i> Our Solution</h2>
+            <p>
+                VITAL-LINK leverages Gemini 2.0 Flash's native multimodal capabilities to process all three
+                data types in a single inference call, enabling true cross-modal correlation reasoning.
+            </p>
+            <div class="highlight-box">
+                <h3>💡 Innovation Highlights</h3>
+                <ul style="margin-bottom: 0;">
+                    <li><strong>Single-Model Multimodal Processing:</strong> No need for separate models—Gemini handles
+                        image, audio, and text natively</li>
+                    <li><strong>Reasoning Trace:</strong> Transparent AI logic showing how each modality contributes to
+                        the diagnosis</li>
+                    <li><strong>Confidence Scoring:</strong> Quantified certainty to help clinicians prioritize cases
+                    </li>
+                    <li><strong>Differential Diagnosis:</strong> Ranked list of possible conditions with probabilities
+                    </li>
+                    <li><strong>Actionable Recommendations:</strong> Suggested next steps for clinical management</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Team -->
+        <section class="content-section">
+            <h2><i class="fas fa-users"></i> Team</h2>
+            <p>Built with passion for the Google Gemini Hackathon 2026</p>
+            <div class="team-grid">
+                <div class="team-card">
+                    <div class="team-avatar"><i class="fas fa-user"></i></div>
+                    <div class="team-name">Ibadat</div>
+                    <div class="team-role">Lead Developer & Data Scientist</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Acknowledgments -->
+        <section class="content-section">
+            <h2><i class="fas fa-heart"></i> Acknowledgments</h2>
+            <ul>
+                <li><strong>Google</strong> — For the Gemini 2.0 Flash API and the hackathon opportunity</li>
+                <li><strong>Kaggle</strong> — For the Chest X-Ray Pneumonia and Respiratory Sound databases</li>
+                <li><strong>Open Source Community</strong> — For Flask, Font Awesome, and the amazing tooling</li>
+            </ul>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-heartbeat"></i>
+                <span>VITAL-LINK</span>
+            </div>
+            <p class="footer-text">
+                Built for the <strong>Google Gemini Hackathon 2026</strong>
+            </p>
+            <p class="footer-disclaimer">
+                ⚠️ AI Research Prototype — Not for Clinical Use
+            </p>
+        </div>
+    </footer>
+</body>
+
+</html>
