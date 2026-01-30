@@ -951,12 +951,12 @@ function renderFeatureImportanceChart(features) {
             scales: {
                 x: {
                     max: 100,
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                    ticks: { color: '#94a3b8' }
+                    grid: { color: 'rgba(14, 47, 86, 0.1)' },
+                    ticks: { color: '#0E2F56' }
                 },
                 y: {
                     grid: { display: false },
-                    ticks: { color: '#ECECDA', font: { size: 11 } }
+                    ticks: { color: '#0E2F56', font: { size: 11 } }
                 }
             }
         }
