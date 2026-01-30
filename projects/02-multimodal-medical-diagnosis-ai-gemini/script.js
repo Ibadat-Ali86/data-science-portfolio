@@ -879,7 +879,7 @@ function renderRiskGaugeChart(score) {
     }
 
     const remaining = 100 - score;
-    const color = score >= 70 ? '#ef4444' : score >= 40 ? '#f59e0b' : '#10b981';
+    const color = score >= 70 ? '#FF304F' : score >= 40 ? '#f59e0b' : '#10b981';
 
     riskGaugeChart = new Chart(ctx, {
         type: 'doughnut',
@@ -928,7 +928,7 @@ function renderFeatureImportanceChart(features) {
 
     const labels = features.map(f => f.feature);
     const data = features.map(f => (f.contribution * 100).toFixed(1));
-    const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899'];
+    const colors = ['#118DF0', '#0E2F56', '#FF304F', '#ECECDA', '#10b981'];
 
     featureImportanceChart = new Chart(ctx, {
         type: 'bar',
@@ -956,7 +956,7 @@ function renderFeatureImportanceChart(features) {
                 },
                 y: {
                     grid: { display: false },
-                    ticks: { color: '#f1f5f9', font: { size: 11 } }
+                    ticks: { color: '#ECECDA', font: { size: 11 } }
                 }
             }
         }
@@ -973,10 +973,10 @@ function renderDifferentialChart(diagnoses) {
     const labels = diagnoses.map(d => d.condition.substring(0, 15));
     const data = diagnoses.map(d => parseInt(d.probability) || 50);
     const colors = [
-        'rgba(102, 126, 234, 0.8)',
-        'rgba(139, 92, 246, 0.8)',
-        'rgba(236, 72, 153, 0.8)',
-        'rgba(6, 182, 212, 0.8)',
+        'rgba(17, 141, 240, 0.8)',
+        'rgba(14, 47, 86, 0.8)',
+        'rgba(255, 48, 79, 0.8)',
+        'rgba(236, 236, 218, 0.8)',
         'rgba(16, 185, 129, 0.8)'
     ];
 

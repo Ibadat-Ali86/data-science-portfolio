@@ -1,13 +1,20 @@
 /* ============================================
    VITAL-LINK — Premium Medical AI Dashboard
    Professional CSS with Gradients & Animations
+   Custom Color Scheme: #118DF0, #0E2F56, #FF304F, #ECECDA
    ============================================ */
 
 /* === CSS Variables === */
 :root {
+    /* Custom Color Palette */
+    --color-blue: #118DF0;
+    --color-navy: #0E2F56;
+    --color-red: #FF304F;
+    --color-cream: #ECECDA;
+
     /* Primary Gradient Colors */
-    --primary-start: #667eea;
-    --primary-end: #764ba2;
+    --primary-start: #118DF0;
+    --primary-end: #0E2F56;
     --primary-gradient: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%);
 
     /* Secondary Gradients */
@@ -15,36 +22,36 @@
     --success-end: #059669;
     --success-gradient: linear-gradient(135deg, var(--success-start) 0%, var(--success-end) 100%);
 
-    --danger-start: #ef4444;
-    --danger-end: #dc2626;
+    --danger-start: #FF304F;
+    --danger-end: #cc2640;
     --danger-gradient: linear-gradient(135deg, var(--danger-start) 0%, var(--danger-end) 100%);
 
     --warning-start: #f59e0b;
     --warning-end: #d97706;
     --warning-gradient: linear-gradient(135deg, var(--warning-start) 0%, var(--warning-end) 100%);
 
-    /* Dark Theme Colors */
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-card: rgba(30, 41, 59, 0.8);
-    --bg-glass: rgba(255, 255, 255, 0.05);
+    /* Dark Theme Colors - Navy based */
+    --bg-primary: #0E2F56;
+    --bg-secondary: #0a2240;
+    --bg-card: rgba(14, 47, 86, 0.85);
+    --bg-glass: rgba(17, 141, 240, 0.08);
 
-    /* Text Colors */
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
+    /* Text Colors - Cream based */
+    --text-primary: #ECECDA;
+    --text-secondary: #c5c5b8;
+    --text-muted: #9a9a8e;
 
     /* Accent Colors */
-    --accent-blue: #3b82f6;
-    --accent-purple: #8b5cf6;
-    --accent-pink: #ec4899;
-    --accent-cyan: #06b6d4;
+    --accent-blue: #118DF0;
+    --accent-purple: #0E2F56;
+    --accent-pink: #FF304F;
+    --accent-cyan: #118DF0;
 
     /* Shadows */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 30px rgba(102, 126, 234, 0.4);
+    --shadow-glow: 0 0 30px rgba(17, 141, 240, 0.4);
 
     /* Border Radius */
     --radius-sm: 8px;
@@ -102,7 +109,7 @@ body {
 .orb-1 {
     width: 600px;
     height: 600px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #118DF0 0%, #0E2F56 100%);
     top: -200px;
     left: -100px;
     animation-delay: 0s;
@@ -111,7 +118,7 @@ body {
 .orb-2 {
     width: 500px;
     height: 500px;
-    background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #118DF0 0%, #0E2F56 100%);
     bottom: -150px;
     right: -100px;
     animation-delay: -7s;
@@ -120,7 +127,7 @@ body {
 .orb-3 {
     width: 400px;
     height: 400px;
-    background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #FF304F 0%, #0E2F56 100%);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -418,17 +425,17 @@ body {
 }
 
 .asthma-btn .btn-icon {
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    background: linear-gradient(135deg, #118DF0 0%, #0E2F56 100%);
     color: white;
 }
 
 .bronchiectasis-btn .btn-icon {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, #0E2F56 0%, #061526 100%);
     color: white;
 }
 
 .bronchiolitis-btn .btn-icon {
-    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+    background: linear-gradient(135deg, #FF304F 0%, #cc2640 100%);
     color: white;
 }
 
@@ -649,12 +656,12 @@ body {
 }
 
 .vital-icon.spo2 {
-    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    background: linear-gradient(135deg, #118DF0 0%, #0E2F56 100%);
     color: white;
 }
 
 .vital-icon.hr {
-    background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #FF304F 0%, #0E2F56 100%);
     color: white;
 }
 
@@ -1470,11 +1477,11 @@ body {
 }
 
 .feature-bar-fill.radiology {
-    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    background: linear-gradient(90deg, #118DF0, #0E2F56);
 }
 
 .feature-bar-fill.auscultation {
-    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    background: linear-gradient(90deg, #FF304F, #cc2640);
 }
 
 .feature-bar-fill.vitals {
@@ -1695,10 +1702,10 @@ body {
    ============================================ */
 
 .analyze-btn.glowing {
-    --glow-color: rgb(176, 252, 255);
-    --glow-spread-color: rgba(123, 251, 255, 0.781);
-    --enhanced-glow-color: rgb(206, 255, 255);
-    --btn-color: rgb(61, 127, 136);
+    --glow-color: #118DF0;
+    --glow-spread-color: rgba(17, 141, 240, 0.6);
+    --enhanced-glow-color: #ECECDA;
+    --btn-color: #0E2F56;
     border: 0.25em solid var(--glow-color);
     color: var(--glow-color);
     font-weight: bold;
@@ -1766,11 +1773,11 @@ body {
 
 .hero-title .gradient-text {
     background: linear-gradient(90deg,
-            #667eea 0%,
-            #764ba2 25%,
-            #ec4899 50%,
-            #764ba2 75%,
-            #667eea 100%);
+            #118DF0 0%,
+            #0E2F56 25%,
+            #FF304F 50%,
+            #0E2F56 75%,
+            #118DF0 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -1790,11 +1797,11 @@ body {
 
 @keyframes textGlow {
     0% {
-        filter: drop-shadow(0 0 2px rgba(102, 126, 234, 0.3));
+        filter: drop-shadow(0 0 2px rgba(17, 141, 240, 0.3));
     }
 
     100% {
-        filter: drop-shadow(0 0 15px rgba(102, 126, 234, 0.6)) drop-shadow(0 0 30px rgba(236, 72, 153, 0.4));
+        filter: drop-shadow(0 0 15px rgba(17, 141, 240, 0.6)) drop-shadow(0 0 30px rgba(255, 48, 79, 0.4));
     }
 }
 
