@@ -1,0 +1,44 @@
+# Render Deployment Configuration
+# This file configures the ML backend for deployment on Render free tier
+
+services:
+  # ML Backend Service
+  - type: web
+    name: walmart-ml-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    
+    # Free tier settings
+    plan: free
+    
+    # Region (choose closest to your users)
+    region: oregon
+    
+    # Health check endpoint
+    healthCheckPath: /health
+    
+    # Environment variables
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SUPABASE_URL
+        sync: false  # Set manually in Render dashboard
+      - key: SUPABASE_SERVICE_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: ALLOWED_ORIGINS
+        value: https://your-frontend.vercel.app,http://localhost:5173
+      - key: MODEL_PATH
+        value: /app/models
+      - key: LOG_LEVEL
+        value: INFO
+    
+    # Auto-deploy on push to main branch
+    autoDeploy: true
+    
+    # Build filter - only rebuild if these paths change
+    buildFilter:
+      paths:
+        - backend/**
+        - Dockerfile
+        - render.yaml
