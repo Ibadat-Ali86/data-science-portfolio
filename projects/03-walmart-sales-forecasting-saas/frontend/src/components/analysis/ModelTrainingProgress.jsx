@@ -73,13 +73,20 @@ const ModelTrainingProgress = ({ data, onTrainingComplete, sessionId }) => {
 
                         // Merge metrics and forecast for upward flow
                         // Ensure metrics object exists to prevent spread of undefined/null
+                        // Merge metrics, forecast, and insights
+                        // Validate metrics object exists
                         const safeMetrics = resultData.metrics || {};
+
+                        // Create structured object matching reportGenerator expectations
+                        // We support both flat and nested usage by providing both
                         const fullResults = {
-                            ...safeMetrics,
-                            forecast: resultData.forecast
+                            ...safeMetrics,     // For flat access (legacy components)
+                            metrics: safeMetrics, // For reportGenerator (nested access)
+                            forecast: resultData.forecast,
+                            insights: resultData.insights
                         };
 
-                        setMetrics(fullResults); // Store full results including forecast
+                        setMetrics(fullResults); // Store full results
                         setMetrics(fullResults); // Store full results including forecast
 
                         // Remove auto-redirect

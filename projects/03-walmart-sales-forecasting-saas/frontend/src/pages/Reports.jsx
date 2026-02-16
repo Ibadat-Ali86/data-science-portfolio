@@ -84,6 +84,7 @@ const Reports = () => {
 
         } catch (error) {
             console.error('Export failed:', error);
+            alert(`Export failed: ${error.message}`);
         } finally {
             setGenerating(false);
         }

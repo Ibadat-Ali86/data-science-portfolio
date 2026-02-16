@@ -26,6 +26,8 @@ import BusinessInsights from '../components/analysis/BusinessInsights';
 import ActionableRecommendations from '../components/analysis/ActionableRecommendations';
 import ForecastVisualizationSuite from '../components/charts/ForecastVisualizationSuite';
 import ColumnMappingModal from '../components/common/ColumnMappingModal';
+import SanityCheck from '../components/analysis/SanityCheck'; // NEW
+import Confetti from '../components/common/Confetti'; // Gamification
 import { API_BASE_URL } from '../utils/constants';
 
 // Simple Error Boundary Component for debugging
@@ -80,6 +82,7 @@ const AnalysisDashboard = () => {
     const [preprocessedData, setPreprocessedData] = useState(null);
     const [modelMetrics, setModelMetrics] = useState(null);
     const [analysisComplete, setAnalysisComplete] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false); // New state for gamification
     const [isRepairingSession, setIsRepairingSession] = useState(false);
     const [activeTab, setActiveTab] = useState('insights');
     const [analysisData, setAnalysisData] = useState(null); // For export functionality
@@ -433,6 +436,7 @@ const AnalysisDashboard = () => {
 
             // State updates last to trigger re-render
             setAnalysisComplete(true);
+            setShowConfetti(true); // Trigger celebration
             setCurrentStep(4);
         } catch (error) {
             console.error("AnalysisDashboard: Error in handleTrainingComplete", error);
@@ -480,6 +484,8 @@ const AnalysisDashboard = () => {
                 <div className="fixed bottom-4 right-4 bg-black/80 text-white text-xs p-2 rounded z-50 pointer-events-none opacity-50">
                     Session: {sessionId || 'NULL'} | Ref: {sessionIdRef.current || 'NULL'} | Store: {sessionStorage.getItem('currentSessionId') || 'NULL'}
                 </div>
+
+                <Confetti trigger={showConfetti} />
 
                 {/* Action Bar */}
                 {analysisComplete && (
@@ -590,6 +596,7 @@ const AnalysisDashboard = () => {
                                     data={uploadedData}
                                     onPreprocessingComplete={handlePreprocessingComplete}
                                     totalRows={backendProfile?.dimensions?.rows} // Pass backend row count
+                                    sessionId={sessionId}
                                 />
                             </motion.div>
                         )}
@@ -633,6 +640,7 @@ const AnalysisDashboard = () => {
                                         {[
                                             { id: 'insights', label: 'Business Insights', icon: <TrendingUp className="w-4 h-4" /> },
                                             { id: 'charts', label: 'Visualizations', icon: <BarChart3 className="w-4 h-4" /> },
+                                            { id: 'sanity', label: 'Sanity Check', icon: <CheckCircle className="w-4 h-4" /> }, // NEW
                                             { id: 'actions', label: 'Action Plan', icon: <Target className="w-4 h-4" /> },
                                         ].map(tab => (
                                             <button
@@ -678,6 +686,22 @@ const AnalysisDashboard = () => {
                                         >
                                             <ErrorBoundary>
                                                 <ForecastVisualizationSuite
+                                                    forecastData={analysisData}
+                                                    historicalData={uploadedData}
+                                                />
+                                            </ErrorBoundary>
+                                        </motion.div>
+                                    )}
+
+                                    {activeTab === 'sanity' && (
+                                        <motion.div
+                                            key="sanity-tab"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                        >
+                                            <ErrorBoundary>
+                                                <SanityCheck
                                                     forecastData={analysisData}
                                                     historicalData={uploadedData}
                                                 />

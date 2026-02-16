@@ -262,122 +262,58 @@ const BusinessInsights = ({ forecastData, metrics, onContinue }) => {
  * Generate business insights from forecast data
  */
 const generateBusinessInsights = (forecastData, metrics) => {
-    const growth = -5 + Math.random() * 30; // -5% to +25%
-    const forecastedDemand = Math.floor(10000 + Math.random() * 50000);
+    // If real business insights are provided from backend, use them
+    if (metrics?.business_insights && !metrics.business_insights.error) {
+        const bi = metrics.business_insights;
+        return {
+            executive: {
+                headline: bi.executive_summary.headline,
+                summary: bi.executive_summary.key_insights[0], // Use first insight as summary
+                forecastedDemand: bi.executive_summary.expected_total.toLocaleString(undefined, { maximumFractionDigits: 0 }),
+                growth: bi.executive_summary.growth_rate,
+                accuracy: bi.executive_summary.accuracy_rating
+            },
+            keyFindings: bi.executive_summary.key_insights.map(insight => ({
+                title: 'Insight', // Backend doesn't give titles yet, generic for now
+                description: insight,
+                positive: !insight.toLowerCase().includes('decline')
+            })),
+            trends: bi.strategic_recommendations.map(rec => ({
+                title: rec.title || rec.category,
+                description: rec.description,
+                direction: 'neutral', // TODO: Add direction to backend or infer
+                impact: rec.priority,
+                timeframe: 'Strategic'
+            })),
+            risks: bi.risk_assessment.identified_risks.map(risk => ({
+                type: risk.type,
+                severity: risk.level,
+                description: risk.description,
+                mitigation: [risk.mitigation]
+            })),
+            opportunities: bi.opportunity_analysis.map(opp => ({
+                title: opp.title,
+                description: opp.description,
+                potential: opp.potential_impact,
+                timeline: 'Strategic',
+                icon: <Target className="w-5 h-5 text-green-600" />
+            }))
+        };
+    }
 
+    // Fallback if no backend insights (should not happen with new backend)
     return {
         executive: {
-            headline: growth > 0
-                ? `Demand forecast shows ${growth > 15 ? 'strong' : 'moderate'} growth trend`
-                : 'Demand forecast indicates market softening - action required',
-            summary: `Based on ${metrics?.trainingSamples?.toLocaleString() || '1,000'}+ historical data points, our analysis predicts ${growth > 0 ? 'increasing' : 'declining'} demand over the next 30 days. ${growth > 10 ? 'This presents significant expansion opportunities.' : growth < 0 ? 'Strategic adjustments are recommended.' : 'Maintain current operational strategies.'}`,
-            forecastedDemand: forecastedDemand.toLocaleString(),
-            growth,
-            accuracy: metrics?.accuracyRating || 'Very Good'
+            headline: "Analysis Complete",
+            summary: "Detailed business insights are being generated.",
+            forecastedDemand: "---",
+            growth: 0,
+            accuracy: "---"
         },
-        keyFindings: [
-            {
-                title: 'Seasonal Pattern Detected',
-                description: 'Strong weekly seasonality with peaks on Friday-Saturday. Plan inventory accordingly.',
-                positive: true
-            },
-            {
-                title: growth > 0 ? 'Growth Momentum' : 'Market Adjustment',
-                description: growth > 0
-                    ? `${Math.abs(growth).toFixed(1)}% growth expected vs historical average`
-                    : `${Math.abs(growth).toFixed(1)}% decline forecasted - consider promotional strategies`,
-                positive: growth > 0
-            },
-            {
-                title: 'High-Value Products Identified',
-                description: '3 products contribute 40% of forecasted demand. Prioritize stock levels.',
-                positive: true
-            },
-            {
-                title: 'Forecast Confidence',
-                description: `Model accuracy of ${metrics?.mape?.toFixed(1) || 5}% MAPE provides reliable planning basis.`,
-                positive: true
-            }
-        ],
-        trends: [
-            {
-                title: 'Overall Demand Trend',
-                description: growth > 0
-                    ? 'Upward momentum continues, driven by seasonal factors and market expansion.'
-                    : 'Downward pressure detected, requiring demand stimulation strategies.',
-                direction: growth > 0 ? 'up' : 'down',
-                impact: Math.abs(growth) > 15 ? 'high' : 'medium',
-                timeframe: 'Next 30 days'
-            },
-            {
-                title: 'Weekly Seasonality',
-                description: 'Clear weekly pattern with 35% higher demand on weekends vs weekdays.',
-                direction: 'neutral',
-                impact: 'high',
-                timeframe: 'Recurring'
-            },
-            {
-                title: 'Quarter-End Effect',
-                description: 'Historical data shows 20% demand spike in final weeks of each quarter.',
-                direction: 'up',
-                impact: 'medium',
-                timeframe: 'End of Quarter'
-            }
-        ],
-        risks: [
-            {
-                type: 'Stockout Risk',
-                severity: growth > 15 ? 'high' : 'medium',
-                description: growth > 15
-                    ? 'Strong demand growth may exceed current inventory capacity.'
-                    : 'Moderate demand variability requires adequate safety stock.',
-                mitigation: [
-                    'Increase safety stock by 15-20% for high-velocity items',
-                    'Establish expedited supplier agreements',
-                    'Monitor real-time inventory levels'
-                ]
-            },
-            {
-                type: 'Demand Volatility',
-                severity: 'medium',
-                description: 'Weekly demand fluctuations of ±25% require flexible operations.',
-                mitigation: [
-                    'Implement dynamic pricing strategies',
-                    'Use demand sensing for short-term adjustments',
-                    'Cross-train staff for demand surges'
-                ]
-            }
-        ],
-        opportunities: [
-            {
-                title: 'Cross-Selling Potential',
-                description: 'Complementary product pairs identified with 30% co-purchase rate.',
-                potential: 'High ROI',
-                timeline: 'Immediate',
-                icon: <ShoppingCart className="w-5 h-5 text-green-600" />
-            },
-            {
-                title: 'Premium Segment Growth',
-                description: 'Higher-margin products showing stronger growth than average.',
-                potential: 'Revenue uplift',
-                timeline: '30-60 days',
-                icon: <DollarSign className="w-5 h-5 text-green-600" />
-            },
-            {
-                title: 'Inventory Optimization',
-                description: 'Reduce holding costs by 15% through demand-driven reordering.',
-                potential: 'Cost savings',
-                timeline: 'Ongoing',
-                icon: <Package className="w-5 h-5 text-green-600" />
-            },
-            {
-                title: 'Marketing Timing',
-                description: 'Optimal campaign windows identified based on demand patterns.',
-                potential: 'Higher conversion',
-                timeline: '2 weeks',
-                icon: <Target className="w-5 h-5 text-green-600" />
-            }
-        ]
+        keyFindings: [],
+        trends: [],
+        risks: [],
+        opportunities: []
     };
 };
 

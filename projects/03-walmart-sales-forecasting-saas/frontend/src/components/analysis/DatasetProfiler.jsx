@@ -12,6 +12,10 @@ import {
     AlertCircle,
     Info
 } from 'lucide-react';
+import DataQualityScorecard from './DataQualityScorecard';
+
+import DynamicKPIs from '../dashboard/DynamicKPIs';
+import NarrativeReport from '../dashboard/NarrativeReport';
 
 /**
  * DatasetProfiler - Analyzes uploaded CSV data and displays comprehensive profiling
@@ -73,6 +77,25 @@ const DatasetProfiler = ({ data, onProfileComplete, externalProfile }) => {
                 </div>
             </div>
 
+
+
+            {/* Phase 11: Dynamic Domain KPIs */}
+            {
+                profile.dynamic_kpis && profile.dynamic_kpis.length > 0 && (
+                    <DynamicKPIs
+                        kpis={profile.dynamic_kpis}
+                        domainInfo={profile.domain_analysis}
+                    />
+                )
+            }
+
+
+
+            {/* Phase 12: Adaptive Report */}
+            {profile.narrative_report && (
+                <NarrativeReport report={profile.narrative_report} />
+            )}
+
             {/* Business Insights */}
             <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -80,7 +103,7 @@ const DatasetProfiler = ({ data, onProfileComplete, externalProfile }) => {
                     Key Business Insights
                 </h3>
                 <div className="space-y-3">
-                    {profile.businessInsights.map((insight, idx) => (
+                    {(profile.businessInsights || []).map((insight, idx) => (
                         <motion.div
                             key={idx}
                             initial={{ opacity: 0, x: -20 }}
@@ -96,36 +119,54 @@ const DatasetProfiler = ({ data, onProfileComplete, externalProfile }) => {
             </div>
 
             {/* Data Quality Assessment */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                    Data Quality Assessment
-                </h3>
+            {
+                profile.quality_scorecard ? (
+                    <DataQualityScorecard scorecard={profile.quality_scorecard} />
+                ) : (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                            Data Quality Assessment
+                        </h3>
 
-                {/* Missing Values Warning */}
-                {profile.dataQuality.missingCount > 0 && (
-                    <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                            <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                            <h4 className="font-semibold text-yellow-900 dark:text-yellow-200">
-                                Missing Values Detected
-                            </h4>
-                        </div>
-                        <ul className="space-y-1 text-sm text-yellow-800 dark:text-yellow-300">
-                            {Object.entries(profile.dataQuality.missingByColumn).map(([col, count]) => (
-                                count > 0 && (
-                                    <li key={col} className="flex justify-between">
-                                        <span>{col}</span>
-                                        <span className="font-medium">
-                                            {count} missing ({((count / profile.dimensions.rows) * 100).toFixed(2)}%)
-                                        </span>
-                                    </li>
-                                )
-                            ))}
-                        </ul>
+                        {/* Missing Values Warning (Fallback) */}
+                        {profile.dataQuality.missingCount > 0 && (
+                            <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                                    <h4 className="font-semibold text-yellow-900 dark:text-yellow-200">
+                                        Missing Values Detected
+                                    </h4>
+                                </div>
+                                <ul className="space-y-1 text-sm text-yellow-800 dark:text-yellow-300">
+                                    {Object.entries(profile.dataQuality.missingByColumn).map(([col, count]) => (
+                                        count > 0 && (
+                                            <li key={col} className="flex justify-between">
+                                                <span>{col}</span>
+                                                <span className="font-medium">
+                                                    {count} missing ({((count / profile.dimensions.rows) * 100).toFixed(2)}%)
+                                                </span>
+                                            </li>
+                                        )
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {!profile.dataQuality.missingCount && (
+                            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-2 text-green-700 dark:text-green-300">
+                                <CheckCircle className="w-5 h-5" />
+                                <span>No missing values detected. Basic quality check passed.</span>
+                            </div>
+                        )}
                     </div>
-                )}
+                )
+            }
 
-                {/* Column Statistics Table */}
+            {/* Column Statistics Table */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                    Column Statistics
+                </h3>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-900">
@@ -252,34 +293,42 @@ const DatasetProfiler = ({ data, onProfileComplete, externalProfile }) => {
                 </div>
             </div>
 
-            {onProfileComplete && (
-                <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={async () => {
-                        setIsProcessing(true);
-                        const success = await onProfileComplete(profile);
-                        if (success !== true) {
-                            setIsProcessing(false);
-                        }
-                    }}
-                    disabled={isProcessing}
-                    className={`w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 transition-all ${isProcessing ? 'opacity-75 cursor-not-allowed' : ''}`}
-                >
-                    {isProcessing ? (
-                        <>
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Processing...
-                        </>
-                    ) : (
-                        <>
-                            <TrendingUp className="w-5 h-5" />
-                            Proceed to Data Preprocessing
-                        </>
-                    )}
-                </motion.button>
-            )}
-        </motion.div>
+            {
+                onProfileComplete && (
+                    <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={async () => {
+                            setIsProcessing(true);
+                            try {
+                                const success = await onProfileComplete(profile);
+                                if (!success) {
+                                    console.warn("Profile completion returned false");
+                                }
+                            } catch (error) {
+                                console.error("Profile completion error:", error);
+                            } finally {
+                                setIsProcessing(false);
+                            }
+                        }}
+                        disabled={isProcessing}
+                        className={`w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 transition-all ${isProcessing ? 'opacity-75 cursor-not-allowed' : ''}`}
+                    >
+                        {isProcessing ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Processing...
+                            </>
+                        ) : (
+                            <>
+                                <TrendingUp className="w-5 h-5" />
+                                Proceed to Data Preprocessing
+                            </>
+                        )}
+                    </motion.button>
+                )
+            }
+        </motion.div >
     );
 };
 

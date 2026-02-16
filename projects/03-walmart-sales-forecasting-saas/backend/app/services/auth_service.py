@@ -63,3 +63,39 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+def get_or_create_oauth_user(db: Session, user_info: dict) -> User:
+    """
+    Get existing user by email or create new one from OAuth info.
+    """
+    email = user_info.get('email')
+    if not email:
+        raise HTTPException(status_code=400, detail="Email not provided by OAuth provider")
+        
+    # Check if user exists
+    user = db.query(User).filter(User.email == email).first()
+    
+    if user:
+        return user
+        
+    # Create new user
+    # Generate random secure password since they use OAuth
+    import secrets
+    import string
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    password = ''.join(secrets.choice(alphabet) for i in range(32))
+    hashed_password = get_password_hash(password)
+    
+    new_user = User(
+        email=email,
+        password_hash=hashed_password,
+        full_name=user_info.get('name'),
+        role="analyst", # Default role
+        is_active=True
+    )
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    return new_user

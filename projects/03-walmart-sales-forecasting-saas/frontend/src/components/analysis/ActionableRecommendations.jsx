@@ -308,7 +308,7 @@ const ExportSection = ({ analysisData }) => {
             setTimeout(() => setExportSuccess(null), 3000);
         } catch (error) {
             console.error('Export failed:', error);
-            alert('Export failed. Please try again.');
+            alert(`Export failed: ${error.message}. Please check data validity.`);
         } finally {
             setExporting(null);
         }

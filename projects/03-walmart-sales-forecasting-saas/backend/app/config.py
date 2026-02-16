@@ -21,6 +21,15 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
+    # OAuth Settings
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GITHUB_CLIENT_ID: Optional[str] = None
+    GITHUB_CLIENT_SECRET: Optional[str] = None
+    
+    # Frontend URL for Redirects
+    FRONTEND_URL: str = "http://localhost:3000"
+    
     # CORS - Allow Vercel frontend and local development
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",

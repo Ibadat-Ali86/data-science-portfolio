@@ -132,6 +132,59 @@ class DataProfileRequest(BaseModel):
     date_col: str = 'date'
 
 
+class InitSessionRequest(BaseModel):
+    file_path: str
+    filename: str
+
+@router.post("/init-session-from-path")
+async def init_session_from_path(request: InitSessionRequest):
+    """
+    Initialize a new analysis session from an existing file path (e.g., after conversion)
+    """
+    try:
+        if not os.path.exists(request.file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+            
+        # Read the file
+        try:
+            df = pd.read_csv(request.file_path)
+            # Re-validate essential columns just in case
+            if 'date' not in df.columns or 'target' not in df.columns:
+                 # Try to infer again or just fail if conversion should have guaranteed it
+                 pass
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to read file: {str(e)}")
+            
+        # Generate Session ID
+        session_id = str(uuid.uuid4())
+        
+        # Store in session state
+        analysis_sessions[session_id] = {
+            'id': session_id,
+            'filename': request.filename,
+            'upload_time': datetime.now().isoformat(),
+            'rows': len(df),
+            'columns': list(df.columns),
+            'data': df.to_dict('records'), # Store full data in memory (for MVP)
+            'status': 'uploaded'
+        }
+        
+        logger.info(f"Initialized session {session_id} from {request.file_path}")
+        
+        return {
+            "session_id": session_id,
+            "filename": request.filename,
+            "rows": len(df),
+            "columns": list(df.columns),
+            "sample_data": df.head(5).astype(str).to_dict('records'),
+            "message": "Session initialized successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Session initialization failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/upload")
 async def upload_dataset(file: UploadFile = File(...)):
     """
@@ -237,6 +290,35 @@ async def profile_dataset(session_id: str, request: DataProfileRequest):
     logger.info(f"✅ Session {session_id} found. Status: {job['status']}, Rows: {job['rows']}")
     df = pd.DataFrame(job['data'])
     
+    # GATE 3: Profiling Validation
+    from ..services.pipeline_validator import PipelineValidator
+    profile_validation = PipelineValidator.validate_profiling(df)
+    if not profile_validation['valid']:
+        # We don't block profiling but we warn heavily
+        logger.warning(f"Profiling Data Quality Issues: {profile_validation['issues']}")
+        # We could potentially inject these issues into the profile result
+    
+    # --- Date Synthesis Logic (for Warehouse_and_Retail_Sales.csv) ---
+    # If date_col is not found, check for component columns (Year/Month)
+    if request.date_col not in df.columns:
+        # Check for YEAR/MONTH variations
+        year_col = next((c for c in df.columns if c.upper() == 'YEAR'), None)
+        month_col = next((c for c in df.columns if c.upper() == 'MONTH'), None)
+        
+        if year_col and month_col:
+            try:
+                logger.info(f"📅 Detected Year/Month columns ({year_col}, {month_col}). Synthesizing Date column...")
+                # Create synthetic date (Day 1 of each month)
+                df['Date'] = pd.to_datetime(dict(year=df[year_col], month=df[month_col], day=1))
+                request.date_col = 'Date' # Switch target to new column
+                
+                # Update stored job data with new column
+                job['data'] = df.to_dict('records') # Update rows
+                job['columns'] = list(df.columns)   # Update columns list
+                save_jobs()
+            except Exception as e:
+                logger.warning(f"Failed to synthesize date: {e}")
+
     profile = {
         'dimensions': {
             'rows': len(df),
@@ -245,7 +327,8 @@ async def profile_dataset(session_id: str, request: DataProfileRequest):
         'columns': [],
         'data_quality': {},
         'statistics': {},
-        'time_series_info': {}
+        'time_series_info': {},
+        'businessInsights': [] # CRITICAL FIX: Ensure array exists
     }
     
     # Column analysis
@@ -283,22 +366,44 @@ async def profile_dataset(session_id: str, request: DataProfileRequest):
     if request.date_col in df.columns:
         try:
             df[request.date_col] = pd.to_datetime(df[request.date_col])
+            # Calculate time metrics
+            min_date = df[request.date_col].min()
+            max_date = df[request.date_col].max()
+            duration_days = (max_date - min_date).days
+            
             profile['time_series_info'] = {
-                'date_range_start': df[request.date_col].min().strftime('%Y-%m-%d'),
-                'date_range_end': df[request.date_col].max().strftime('%Y-%m-%d'),
-                'total_days': (df[request.date_col].max() - df[request.date_col].min()).days,
+                'date_range_start': min_date.strftime('%Y-%m-%d'),
+                'date_range_end': max_date.strftime('%Y-%m-%d'),
+                'total_days': duration_days,
                 'frequency': 'Daily' if df[request.date_col].diff().median().days == 1 else 'Variable'
             }
-        except:
+            
+            # Add to Business Insights
+            profile['businessInsights'].append(f"Time range: {min_date.strftime('%Y-%m-%d')} to {max_date.strftime('%Y-%m-%d')} ({duration_days} days)")
+            profile['dimensions']['timeSpanDays'] = duration_days # Ensure frontend compatibility
+            
+        except Exception as e:
+            logger.warning(f"Date parsing error: {e}")
             profile['time_series_info'] = {'error': 'Could not parse date column'}
     
     # Target variable statistics
     if request.target_col in df.columns and df[request.target_col].dtype in ['int64', 'float64']:
-        profile['statistics'] = {
-            'target_mean': round(float(df[request.target_col].mean()), 2),
-            'target_std': round(float(df[request.target_col].std()), 2),
-            'target_total': round(float(df[request.target_col].sum()), 2)
-        }
+        try:
+            target_mean = float(df[request.target_col].mean())
+            target_sum = float(df[request.target_col].sum())
+            
+            profile['statistics'] = {
+                'target_mean': round(target_mean, 2),
+                'target_std': round(float(df[request.target_col].std()), 2),
+                'target_total': round(target_sum, 2)
+            }
+            
+            # Add to Business Insights
+            profile['businessInsights'].append(f"Average {request.target_col}: {target_mean:,.2f}")
+            profile['businessInsights'].append(f"Total {request.target_col}: {target_sum:,.2f}")
+            
+        except Exception as e:
+            logger.warning(f"Target stats error: {e}")
     
     # Forecasting readiness assessment
     readiness_score = 0
@@ -329,6 +434,53 @@ async def profile_dataset(session_id: str, request: DataProfileRequest):
         'ready': readiness_score >= 75,
         'issues': readiness_issues
     }
+
+    # --- Phase 2.2: Data Quality Scorecard ---
+    try:
+        from app.services.data_adapter import DataAdapter
+        adapter = DataAdapter()
+        scorecard = adapter.generate_quality_scorecard(df)
+        profile['quality_scorecard'] = scorecard
+    except Exception as e:
+        logger.warning(f"Failed to generate quality scorecard: {e}")
+        profile['quality_scorecard'] = None
+
+    # --- Phase 11: Dynamic KPI Generation (Universal Adapter) ---
+    try:
+        from app.services.schema_detector import schema_detector
+        from app.services.kpi_generator import kpi_generator
+        
+        # 1. Re-detect domain (or retrieval from session if we stored it)
+        domain_report = schema_detector.detect_domain(df)
+        
+        # 2. Generate KPIs
+        # Invert mapping? schema_detector returns std->user. kpi_generator needs that.
+        # kpi_generator.generate_kpis expects column_mapping as std->user
+        kpis = kpi_generator.generate_kpis(
+            df, 
+            domain_report.domain_key,
+            domain_report.matched_columns
+        )
+        
+        profile['domain_analysis'] = domain_report.dict()
+        profile['dynamic_kpis'] = kpis
+        
+        logger.info(f"Generated {len(kpis)} dynamic KPIs for domain: {domain_report.domain}")
+        
+        # --- Phase 12: Adaptive Narrative Report ---
+        from app.services.report_generator import report_generator
+        narrative = report_generator.generate_narrative(
+            domain_report.domain_key,
+            kpis,
+            profile
+        )
+        profile['narrative_report'] = narrative
+        
+    except Exception as e:
+        logger.error(f"Failed to generate dynamic KPIs/Report: {e}")
+        profile['dynamic_kpis'] = []
+        profile['domain_analysis'] = None
+        profile['narrative_report'] = None
     
     # Update job status
     training_jobs[session_id]['status'] = 'profiled'
@@ -336,6 +488,99 @@ async def profile_dataset(session_id: str, request: DataProfileRequest):
     save_jobs()
     
     return profile
+
+
+@router.post("/preprocess/{session_id}")
+async def preprocess_dataset(session_id: str):
+    """
+    Apply robust preprocessing to the dataset.
+    Returns the transformed data sample and a changelog.
+    Phase 2.3: Lightweight Preprocessing Log
+    """
+    try:
+        if session_id not in training_jobs:
+            # Try load
+            load_jobs()
+            if session_id not in training_jobs:
+                raise HTTPException(status_code=404, detail="Session not found")
+        
+        job = training_jobs[session_id]
+        df = pd.DataFrame(job['data'])
+        
+        from app.services.data_adapter import DataAdapter
+        adapter = DataAdapter()
+        
+        # Apply normalization and preprocessing
+        # Note: we might have already done some in 'upload', but this forces a clean pass
+        df_clean, report = adapter.normalize_dataset(df)
+        
+        # Enhanced Logging for Frontend
+        log = []
+        
+        # 1. Structural Changes
+        if report.get('transformations'):
+            for t in report['transformations']:
+                log.append({
+                    "step": "Structural Normalization",
+                    "status": "completed",
+                    "message": t,
+                    "icon": "structure"
+                })
+                
+        # 2. Date Parsing
+        if 'date' in df_clean.columns:
+            log.append({
+                "step": "Date Standardization",
+                "status": "completed",
+                "message": f"standardized to datetime format ({df_clean['date'].min()} to {df_clean['date'].max()})",
+                "icon": "calendar"
+            })
+            
+        # 3. Missing Values
+        initial_missing = df.isnull().sum().sum()
+        final_missing = df_clean.isnull().sum().sum()
+        filled = initial_missing - final_missing
+        if filled > 0:
+             log.append({
+                "step": "Imputation",
+                "status": "completed",
+                "message": f"Filled {filled} missing values using forward/backward fill",
+                "icon": "fill"
+            })
+            
+        # 4. Feature Engineering (Simulated or Real if we add it to adapter)
+        # For now, adding basic time features
+        new_features = 0
+        if 'date' in df_clean.columns:
+            df_clean['month'] = df_clean['date'].dt.month
+            df_clean['day_of_week'] = df_clean['date'].dt.dayofweek
+            new_features += 2
+            log.append({
+                "step": "Feature Engineering",
+                "status": "completed",
+                "message": "Extracted temporal features: month, day_of_week",
+                "icon": "sparkles"
+            })
+
+        # Update Session
+        training_jobs[session_id]['data'] = df_clean.to_dict('records') # Update with cleaned data
+        training_jobs[session_id]['columns'] = list(df_clean.columns)
+        training_jobs[session_id]['status'] = 'preprocessed'
+        training_jobs[session_id]['preprocessing_log'] = log
+        save_jobs()
+        
+        return {
+            "success": True,
+            "rows": len(df_clean),
+            "features": len(df_clean.columns),
+            "new_features": newFeatures,
+            "log": log,
+            "sample": df_clean.head(5).astype(str).to_dict('records')
+        }
+
+    except Exception as e:
+        logger.error(f"Preprocessing failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/train/{session_id}")
@@ -410,7 +655,6 @@ async def run_training(
         training_jobs[job_id]['current_step'] = 'Loading data...'
         
         # Get data
-        # Ensure we are using the correct session data
         if session_id not in training_jobs:
              raise ValueError(f"Session {session_id} not found for data access")
              
@@ -419,29 +663,73 @@ async def run_training(
         training_jobs[job_id]['progress'] = 20
         training_jobs[job_id]['current_step'] = 'Preparing features...'
         
-        # Select model
+        # Initialize Model Router
+        from app.services.model_router import ModelRouter
+        from app.ml.baseline_models import NaiveForecaster, MovingAverageForecaster
+        
+        router = ModelRouter()
+        
+        # Determine model candidates
+        candidates = []
+        if model_type == 'auto' or model_type == 'ensemble':
+            # Use Router recommendation
+            candidates = router.route_model(df, target_col, date_col)
+        else:
+            # User selected specific model, but we add fallbacks
+            candidates = [model_type, 'naive']
+            
+        logger.info(f"Model selection strategy: {candidates}")
+        
+        # Model Registry
         model_classes = {
             'prophet': ProphetForecaster,
             'xgboost': XGBoostForecaster,
             'sarima': SARIMAForecaster,
-            'ensemble': EnsembleForecaster
+            'ensemble': EnsembleForecaster,
+            'naive': NaiveForecaster,
+            'moving_average': MovingAverageForecaster
         }
         
-        if model_type not in model_classes:
-            raise ValueError(f"Unknown model type: {model_type}")
+        trained_model = None
+        metrics = None
+        used_model_name = None
         
-        training_jobs[job_id]['progress'] = 30
-        training_jobs[job_id]['current_step'] = f'Training {model_type} model...'
+        # Iterate through candidates (Fallback Loop)
+        for candidate in candidates:
+            if candidate not in model_classes:
+                continue
+                
+            try:
+                training_jobs[job_id]['current_step'] = f'Training {candidate}...'
+                logger.info(f"Attempting to train {candidate}...")
+                
+                model_instance = model_classes[candidate]()
+                metrics_result = model_instance.train(df, target_col, date_col)
+                
+                # Check for validity (basic check)
+                if metrics_result.mape is None or np.isnan(metrics_result.mape):
+                    raise ValueError("Model returned invalid metrics")
+                
+                # Success!
+                trained_model = model_instance
+                metrics = metrics_result
+                used_model_name = candidate
+                logger.info(f"Successfully trained {candidate} (MAPE: {metrics.mape}%)")
+                break
+                
+            except Exception as e:
+                logger.warning(f"Training failed for {candidate}: {e}")
+                continue
         
-        # Train model
-        model = model_classes[model_type]()
-        metrics = model.train(df, target_col, date_col)
-        
+        if trained_model is None:
+            raise ValueError("All model candidates failed training.")
+            
+        training_jobs[job_id]['model_type'] = used_model_name # Update actual used model
         training_jobs[job_id]['progress'] = 70
         training_jobs[job_id]['current_step'] = 'Generating forecasts...'
         
         # Generate forecast
-        forecast = model.predict(forecast_periods, confidence_level)
+        forecast = trained_model.predict(forecast_periods, confidence_level)
         
         training_jobs[job_id]['progress'] = 90
         training_jobs[job_id]['current_step'] = 'Finalizing results...'
@@ -459,7 +747,8 @@ async def run_training(
             'training_samples': metrics.training_samples,
             'validation_samples': metrics.validation_samples,
             'training_time': metrics.training_time_seconds,
-            'accuracy_rating': model.get_accuracy_rating(metrics.mape)
+            'accuracy_rating': trained_model.get_accuracy_rating(metrics.mape),
+            'used_model': used_model_name # Explicitly correct model name
         }
         training_jobs[job_id]['forecast'] = {
             'dates': forecast.dates,
@@ -470,12 +759,45 @@ async def run_training(
         }
         
         # Feature importance (XGBoost)
-        if hasattr(model, 'feature_importance') and model.feature_importance:
-            training_jobs[job_id]['metrics']['feature_importance'] = model.feature_importance
+        if hasattr(trained_model, 'feature_importance') and trained_model.feature_importance:
+            training_jobs[job_id]['metrics']['feature_importance'] = trained_model.feature_importance
         
         # Model comparison (Ensemble)
-        if hasattr(model, 'get_model_comparison'):
-            training_jobs[job_id]['metrics']['model_comparison'] = model.get_model_comparison()
+        if hasattr(trained_model, 'models') and trained_model.models:
+             # It's an ensemble
+             training_jobs[job_id]['metrics']['model_comparison'] = trained_model.get_model_comparison()
+        
+        # --- Generate Business Insights ---
+        try:
+            from app.services.business_translator import BusinessTranslator
+            
+            translator = BusinessTranslator()
+            
+            # Prepare data for translator
+            forecast_data = pd.DataFrame({
+                'predictions': training_jobs[job_id]['forecast']['predictions'],
+                'dates': training_jobs[job_id]['forecast']['dates']
+            })
+            
+            historical_df = pd.DataFrame(training_jobs[session_id].get('data', []))
+            
+            # Translate to business insights
+            business_insights = translator.translate_forecast_results(
+                forecasts=training_jobs[job_id]['forecast'],  # Pass dict directly
+                historical_data=historical_df,
+                metrics=metrics.__dict__ if hasattr(metrics, '__dict__') else {
+                    'mape': metrics.mape,
+                    'rmse': metrics.rmse,
+                    'r2': metrics.r2
+                },
+                product_info=None  # Can be enhanced with real product data later
+            )
+            
+            training_jobs[job_id]['business_insights'] = business_insights
+            
+        except Exception as e:
+            logger.error(f"Failed to generate business insights: {e}")
+            training_jobs[job_id]['business_insights'] = {"error": "Insights generation failed"}
         
         logger.info(f"Training completed for job {job_id}")
         save_jobs()

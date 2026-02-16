@@ -69,28 +69,28 @@ const Dashboard = () => {
             description: 'Import Walmart sales data for analysis',
             icon: Upload,
             path: '/upload',
-            gradient: 'linear-gradient(135deg, var(--accent-purple), var(--accent-blue))'
+            gradient: 'linear-gradient(135deg, #3B82F6, #6366F1)'
         },
         {
             title: 'Run Analysis',
             description: 'Analyze trends and patterns',
             icon: Brain,
             path: '/analysis',
-            gradient: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-blue))'
+            gradient: 'linear-gradient(135deg, #06B6D4, #3B82F6)'
         },
         {
             title: 'View Forecasts',
             description: 'Explore prediction results',
             icon: TrendingUp,
             path: '/forecast-explorer',
-            gradient: 'linear-gradient(135deg, var(--accent-green), var(--accent-cyan))'
+            gradient: 'linear-gradient(135deg, #10B981, #06B6D4)'
         },
         {
             title: 'Plan Scenarios',
             description: 'Simulate business what-ifs',
             icon: Sparkles,
             path: '/scenario-planning',
-            gradient: 'linear-gradient(135deg, var(--accent-orange), var(--accent-red))'
+            gradient: 'linear-gradient(135deg, #F59E0B, #EF4444)'
         }
     ];
 

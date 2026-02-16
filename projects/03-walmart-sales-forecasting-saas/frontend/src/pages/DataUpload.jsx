@@ -20,6 +20,8 @@ import {
 import Layout from '../components/layout/Layout';
 import { useFlow } from '../context/FlowContext';
 import { API_BASE_URL } from '../utils/constants';
+import ColumnMapper from '../components/pipeline/ColumnMapper';
+import GapAnalysisReport from '../components/pipeline/GapAnalysisReport';
 
 const DataUpload = () => {
     const navigate = useNavigate();
@@ -33,6 +35,14 @@ const DataUpload = () => {
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [isProcessingBackend, setIsProcessingBackend] = useState(false);
     const [currentFile, setCurrentFile] = useState(null);
+
+    // Mapper State
+    const [showMapper, setShowMapper] = useState(false);
+    const [suggestedMapping, setSuggestedMapping] = useState(null);
+    const [detectedColumns, setDetectedColumns] = useState([]);
+    const [tempFilePath, setTempFilePath] = useState(null);
+    const [gapReport, setGapReport] = useState(null);
+    const [showGapReport, setShowGapReport] = useState(false);
 
     // Mock Datasets for UI demonstration (plus the uploaded one)
     const [datasets, setDatasets] = useState([
@@ -237,6 +247,9 @@ const DataUpload = () => {
     /**
      * Handle proceeding to analysis by uploading to backend first
      */
+    /**
+     * Handle proceeding to analysis by detecting format first
+     */
     const handleProceedToAnalysis = async () => {
         if (!currentFile) {
             console.error('No file available for backend upload');
@@ -247,43 +260,105 @@ const DataUpload = () => {
         setIsProcessingBackend(true);
 
         try {
-            // Upload to backend API
+            // 1. Upload to Detect Format
             const formData = new FormData();
             formData.append('file', currentFile);
 
-            const response = await fetch(`${API_BASE_URL}/api/analysis/upload`, {
+            const response = await fetch(`${API_BASE_URL}/api/data-pipeline/detect-format`, {
                 method: 'POST',
                 body: formData
             });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ detail: response.statusText }));
-                throw new Error(errorData.detail || 'Backend upload failed');
+                throw new Error(errorData.detail || 'Format detection failed');
             }
 
             const result = await response.json();
-            console.log('Backend upload successful:', result);
+            console.log('Format detected:', result);
 
-            // Update FlowContext with session ID
+            // 2. Set State for Mapper and Gap Analysis
+            setSuggestedMapping(result.suggested_mapping);
+            setDetectedColumns(result.columns);
+            setTempFilePath(result.file_path);
+
+            if (result.schema_analysis) {
+                setGapReport(result.schema_analysis);
+                setShowGapReport(true);
+            } else {
+                // Fallback for legacy behavior
+                setShowMapper(true);
+            }
+
+        } catch (error) {
+            console.error('Detection error:', error);
+            alert(`Failed to detect format: ${error.message}. Please try again.`);
+        } finally {
+            setIsProcessingBackend(false);
+        }
+    };
+
+    const handleMappingConfirm = async (approvedMapping) => {
+        setIsProcessingBackend(true);
+        try {
+            // 4. Convert Format
+            const convertResponse = await fetch(`${API_BASE_URL}/api/data-pipeline/convert-format`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    file_path: tempFilePath,
+                    mapping: approvedMapping,
+                    encoding: 'utf-8', // default
+                    separator: ',' // default
+                })
+            });
+
+            if (!convertResponse.ok) {
+                const errorData = await convertResponse.json();
+                throw new Error(errorData.message || 'Conversion failed');
+            }
+
+            const convertResult = await convertResponse.json();
+            if (!convertResult.success) {
+                throw new Error(convertResult.message);
+            }
+
+            // 5. Initialize Session
+            const initResponse = await fetch(`${API_BASE_URL}/api/analysis/init-session-from-path`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    file_path: convertResult.converted_file_path,
+                    filename: currentFile.name
+                })
+            });
+
+            if (!initResponse.ok) {
+                const errorData = await initResponse.json();
+                throw new Error(errorData.detail || 'Session init failed');
+            }
+
+            const sessionResult = await initResponse.json();
+
+            // 6. Complete & Navigate
             const uploadData = {
-                sessionId: result.session_id,
-                rawData: result.sample_data,
-                allData: result.sample_data, // Backend returns sample, full data is on server
-                columns: result.columns,
-                fileName: result.filename,
-                totalRows: result.rows,
+                sessionId: sessionResult.session_id,
+                rawData: sessionResult.sample_data,
+                allData: sessionResult.sample_data,
+                columns: sessionResult.columns,
+                fileName: sessionResult.filename,
+                totalRows: sessionResult.rows,
                 uploadedAt: new Date().toISOString()
             };
             completeStep('upload', uploadData);
+            sessionStorage.setItem('currentSessionId', sessionResult.session_id);
 
-            // Save session to storage as backup
-            sessionStorage.setItem('currentSessionId', result.session_id);
-
-            // Navigate to analysis
+            setShowMapper(false);
             navigate('/analysis');
+
         } catch (error) {
-            console.error('Backend upload error:', error);
-            alert(`Failed to prepare analysis: ${error.message}. Please try again.`);
+            console.error('Mapping processing error:', error);
+            alert(`Failed to process data: ${error.message}`);
         } finally {
             setIsProcessingBackend(false);
         }
@@ -547,6 +622,50 @@ const DataUpload = () => {
                     </div>
                 </section>
             </div>
+
+            <AnimatePresence>
+                {showGapReport && (
+                    <div className="modal-overlay">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="w-full flex justify-center items-center p-4"
+                        >
+                            <GapAnalysisReport
+                                report={gapReport}
+                                onProceed={() => {
+                                    setShowGapReport(false);
+                                    setShowMapper(true);
+                                }}
+                                onCancel={() => setShowGapReport(false)}
+                            />
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Column Mapper Modal */}
+            <AnimatePresence>
+                {showMapper && (
+                    <div className="modal-overlay">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="w-full max-w-4xl"
+                        >
+                            <ColumnMapper
+                                sourceColumns={detectedColumns}
+                                suggestedMapping={suggestedMapping}
+                                onConfirm={handleMappingConfirm}
+                                onCancel={() => setShowMapper(false)}
+                                isLoading={isProcessingBackend}
+                            />
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Preview Modal */}
             <AnimatePresence>

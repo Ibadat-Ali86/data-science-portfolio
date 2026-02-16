@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+
+            @bottom-center {
+                content: "Page " counter(page);
+                font-family: 'Helvetica', sans-serif;
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+
+        body {
+            font-family: 'Helvetica', sans-serif;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        h1 {
+            color: #003366;
+            font-size: 24pt;
+            margin-bottom: 5px;
+            border-bottom: 2px solid #ff6600;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #003366;
+            font-size: 16pt;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-left: 5px solid #ff6600;
+            padding-left: 10px;
+        }
+
+        .header-meta {
+            color: #666;
+            font-size: 10pt;
+            margin-bottom: 30px;
+        }
+
+        .summary-box {
+            background-color: #f0f4f8;
+            border: 1px solid #d1d9e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            display: table-cell;
+            width: 25%;
+            padding: 10px;
+            text-align: center;
+            border-right: 1px solid #eee;
+        }
+
+        .metric-card:last-child {
+            border-right: none;
+        }
+
+        .metric-value {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #003366;
+            display: block;
+        }
+
+        .metric-label {
+            font-size: 9pt;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .comparison-table th {
+            background-color: #003366;
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .comparison-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .positive {
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .negative {
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            text-align: center;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        .chart-img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #eee;
+        }
+
+        .params-list {
+            list-style: none;
+            padding: 0;
+            display: table;
+            width: 100%;
+        }
+
+        .params-item {
+            display: table-cell;
+            width: 25%;
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #eee;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Scenario Planning Report</h1>
+    <div class="header-meta">
+        Generated: {{ generated_date }} | Report ID: {{ report_id }}
+    </div>
+
+    <div class="summary-box">
+        <h3>Executive Impact Summary</h3>
+        <p>
+            Implementing this scenario is projected to result in a
+            <span class="{{ 'positive' if net_impact >= 0 else 'negative' }}">
+                {{ "positive" if net_impact >= 0 else "negative" }} net impact of ${{ "{:,.0f}".format(abs_net_impact)
+                }}
+            </span>
+            on the bottom line.
+            Revenue is expected to {{ "increase" if revenue_change >= 0 else "decrease" }} by {{
+            "{:,.1f}%".format(revenue_change_percent) }}.
+        </p>
+    </div>
+
+    <h2>1. Scenario Configuration</h2>
+    <div class="params-list">
+        <div class="params-item">
+            <div class="metric-label">Markdown</div>
+            <div class="metric-value">{{ scenarios.markdownPercent }}%</div>
+        </div>
+        <div class="params-item">
+            <div class="metric-label">Promo Weeks</div>
+            <div class="metric-value">{{ scenarios.promotionalWeeks }}</div>
+        </div>
+        <div class="params-item">
+            <div class="metric-label">Holiday Boost</div>
+            <div class="metric-value">+{{ scenarios.holidayBoost }}%</div>
+        </div>
+        <div class="params-item">
+            <div class="metric-label">Temp Offset</div>
+            <div class="metric-value">{{ scenarios.temperatureOffset }}°F</div>
+        </div>
+    </div>
+
+    <h2>2. Financial Analysis</h2>
+    <table class="comparison-table">
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>Baseline</th>
+                <th>Scenario (Simulated)</th>
+                <th>Variance ($)</th>
+                <th>Variance (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Projected Revenue</strong></td>
+                <td>${{ "{:,.0f}".format(baseline.revenue) }}</td>
+                <td>${{ "{:,.0f}".format(results.revenue) }}</td>
+                <td class="{{ 'positive' if (results.revenue - baseline.revenue) >= 0 else 'negative' }}">
+                    {{ "+" if (results.revenue - baseline.revenue) >= 0 else "" }}${{ "{:,.0f}".format(results.revenue -
+                    baseline.revenue) }}
+                </td>
+                <td>{{ "{:+.1f}%".format((results.revenue - baseline.revenue) / baseline.revenue * 100) }}</td>
+            </tr>
+            <tr>
+                <td><strong>Gross Margin</strong></td>
+                <td>${{ "{:,.0f}".format(baseline.margin) }}</td>
+                <td>${{ "{:,.0f}".format(results.margin) }}</td>
+                <td class="{{ 'positive' if (results.margin - baseline.margin) >= 0 else 'negative' }}">
+                    {{ "+" if (results.margin - baseline.margin) >= 0 else "" }}${{ "{:,.0f}".format(results.margin -
+                    baseline.margin) }}
+                </td>
+                <td>{{ "{:+.1f}%".format((results.margin - baseline.margin) / baseline.margin * 100) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    {% if comparison_chart %}
+    <div class="chart-container">
+        <h3>Revenue & Margin Impact</h3>
+        <img src="data:image/png;base64,{{ comparison_chart }}" class="chart-img" />
+    </div>
+    {% endif %}
+
+    <h2>3. Operational Implications</h2>
+    <table class="comparison-table">
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>Baseline</th>
+                <th>Scenario</th>
+                <th>Change</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Units Sold</strong></td>
+                <td>{{ "{:,.0f}".format(baseline.unitsSold) }}</td>
+                <td>{{ "{:,.0f}".format(results.unitsSold) }}</td>
+                <td>{{ "{:+.0f}".format(results.unitsSold - baseline.unitsSold) }}</td>
+            </tr>
+            <tr>
+                <td><strong>Inventory Required</strong></td>
+                <td>{{ "{:,.0f}".format(baseline.inventoryNeeded) }}</td>
+                <td>{{ "{:,.0f}".format(results.inventoryNeeded) }}</td>
+                <td>{{ "{:+.0f}".format(results.inventoryNeeded - baseline.inventoryNeeded) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="summary-box" style="margin-top: 20px; border-left: 5px solid #003366;">
+        <strong>Recommendation:</strong>
+        Ensure inventory levels are adjusted by {{ "{:+.0f}".format(results.inventoryNeeded - baseline.inventoryNeeded)
+        }} units to meet the demand shift without causing stockouts or overstock.
+    </div>
+
+</body>
+
+</html>

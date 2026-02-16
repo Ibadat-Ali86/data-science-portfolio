@@ -8,71 +8,115 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-                display: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
-                mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
+                // Professional typography for business platform
+                sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                display: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'monospace'],
             },
             colors: {
-                // Primary Brand - Blue
+                // Primary Blue - Conveys trust, stability, intelligence
                 primary: {
-                    50: '#eff6ff',
-                    100: '#dbeafe',
-                    200: '#bfdbfe',
-                    300: '#93c5fd',
-                    400: '#60a5fa',
-                    500: '#3b82f6',
-                    600: '#2563eb',
-                    700: '#1d4ed8',
-                    800: '#1e40af',
-                    900: '#1e3a8a',
+                    50: '#EFF6FF',
+                    100: '#DBEAFE',
+                    200: '#BFDBFE',
+                    300: '#93C5FD',
+                    400: '#60A5FA',
+                    500: '#3B82F6',
+                    600: '#2563EB',
+                    700: '#1D4ED8',
+                    800: '#1E40AF',
+                    900: '#1E3A8A',
                 },
-                // Background Colors from Design System
+                // Secondary - Professional sophistication (Indigo)
+                secondary: {
+                    50: '#EEF2FF',
+                    100: '#E0E7FF',
+                    200: '#C7D2FE',
+                    300: '#A5B4FC',
+                    400: '#818CF8',
+                    500: '#6366F1',
+                    600: '#4F46E5',
+                    700: '#4338CA',
+                    800: '#3730A3',
+                    900: '#312E81',
+                },
+                // Light Mode Background Colors
                 bg: {
-                    primary: '#0A0E1A',
-                    secondary: '#131829',
-                    tertiary: '#1C2333',
-                    elevated: '#242B3D',
+                    primary: '#F9FAFB',    // Main page background
+                    secondary: '#FFFFFF',   // Cards, elevated surfaces
+                    tertiary: '#F3F4F6',    // Subtle sections
+                    elevated: '#FFFFFF',    // Modals, dropdowns
                 },
-                // Text Colors
+                // Light Mode Text Colors
                 text: {
-                    primary: '#E8EDF4',
-                    secondary: '#A3ADBF',
-                    tertiary: '#6B7790',
+                    primary: '#111827',     // Main headings (gray-900)
+                    secondary: '#4B5563',   // Body text (gray-600)
+                    tertiary: '#9CA3AF',    // Muted text (gray-400)
                 },
-                // Accent Colors
-                accent: {
-                    blue: '#4A9EFF',
-                    cyan: '#00D9FF',
-                    purple: '#B794F6',
-                    pink: '#FF6B9D',
-                    green: '#4ADE80',
-                    yellow: '#FFC947',
-                    red: '#FF5757',
-                    orange: '#FF8A5B',
+                // Neutral Gray Scale
+                gray: {
+                    50: '#F9FAFB',
+                    100: '#F3F4F6',
+                    200: '#E5E7EB',
+                    300: '#D1D5DB',
+                    400: '#9CA3AF',
+                    500: '#6B7280',
+                    600: '#4B5563',
+                    700: '#374151',
+                    800: '#1F2937',
+                    900: '#111827',
                 },
-                // Semantic Colors
-                status: {
-                    info: '#4A9EFF',
-                    success: '#4ADE80',
-                    warning: '#FFC947',
-                    error: '#FF5757',
+                // Success - Growth, positive metrics, profit
+                success: {
+                    50: '#ECFDF5',
+                    100: '#D1FAE5',
+                    200: '#A7F3D0',
+                    500: '#10B981',
+                    600: '#059669',
+                    700: '#047857',
                 },
-                // Data Viz Colors
+                // Warning - Caution, attention needed
+                warning: {
+                    50: '#FFFBEB',
+                    100: '#FEF3C7',
+                    200: '#FDE68A',
+                    500: '#F59E0B',
+                    600: '#D97706',
+                    700: '#B45309',
+                },
+                // Error - Loss, negative metrics, risk
+                error: {
+                    50: '#FEF2F2',
+                    100: '#FEE2E2',
+                    200: '#FECACA',
+                    500: '#EF4444',
+                    600: '#DC2626',
+                    700: '#B91C1C',
+                },
+                // Info - Neutral information
+                info: {
+                    50: '#EFF6FF',
+                    100: '#DBEAFE',
+                    200: '#BFDBFE',
+                    500: '#3B82F6',
+                    600: '#2563EB',
+                    700: '#1D4ED8',
+                },
+                // Data Visualization Palette (Business-friendly)
                 viz: {
-                    1: '#4A9EFF',
-                    2: '#4ADE80',
-                    3: '#FFC947',
-                    4: '#FF6B9D',
-                    5: '#B794F6',
-                    6: '#00D9FF',
-                    7: '#FF8A5B',
-                    8: '#8B5CF6',
+                    primary: '#3B82F6',    // Blue - Main series
+                    secondary: '#10B981',  // Green - Growth/positive
+                    tertiary: '#F59E0B',   // Amber - Caution
+                    quaternary: '#6366F1', // Indigo - Alternative
+                    quinary: '#EC4899',    // Pink - Highlights
+                    senary: '#8B5CF6',     // Purple - Special
                 },
-                // Borders
+                // Borders (Light Mode)
                 border: {
-                    primary: 'rgba(163, 173, 191, 0.12)',
-                    focus: '#4A9EFF',
-                    error: '#FF5757',
+                    primary: '#E5E7EB',    // Standard borders
+                    secondary: '#D1D5DB',  // Emphasized borders
+                    focus: '#3B82F6',      // Focus state
+                    error: '#EF4444',      // Error state
                 }
             },
             spacing: {
@@ -92,16 +136,16 @@ export default {
                 '24': '6rem',    // 96px
             },
             fontSize: {
-                xs: ['0.75rem', { lineHeight: '1.5' }],      // 12px
-                sm: ['0.875rem', { lineHeight: '1.5' }],     // 14px
-                base: ['1rem', { lineHeight: '1.5' }],       // 16px
-                lg: ['1.125rem', { lineHeight: '1.75' }],    // 18px
-                xl: ['1.25rem', { lineHeight: '1.75' }],     // 20px
-                '2xl': ['1.5rem', { lineHeight: '2rem' }],   // 24px
-                '3xl': ['1.875rem', { lineHeight: '2.25rem' }], // 30px
-                '4xl': ['2.25rem', { lineHeight: '2.5rem' }],   // 36px
-                '5xl': ['3rem', { lineHeight: '1' }],        // 48px
-                '6xl': ['3.75rem', { lineHeight: '1' }],     // 60px
+                xs: ['0.75rem', { lineHeight: '1rem' }],         // 12px
+                sm: ['0.875rem', { lineHeight: '1.25rem' }],     // 14px
+                base: ['1rem', { lineHeight: '1.5rem' }],        // 16px
+                lg: ['1.125rem', { lineHeight: '1.75rem' }],     // 18px
+                xl: ['1.25rem', { lineHeight: '1.75rem' }],      // 20px
+                '2xl': ['1.5rem', { lineHeight: '2rem' }],       // 24px
+                '3xl': ['1.875rem', { lineHeight: '2.25rem' }],  // 30px
+                '4xl': ['2.25rem', { lineHeight: '2.5rem' }],    // 36px
+                '5xl': ['3rem', { lineHeight: '3rem' }],         // 48px
+                '6xl': ['3.75rem', { lineHeight: '3.75rem' }],   // 60px
             },
             borderRadius: {
                 sm: '0.25rem',    // 4px
@@ -113,37 +157,49 @@ export default {
                 full: '9999px',
             },
             boxShadow: {
-                sm: '0 1px 3px rgba(0, 0, 0, 0.4)',
-                DEFAULT: '0 1px 3px rgba(0, 0, 0, 0.4)',
-                md: '0 4px 12px rgba(0, 0, 0, 0.5)',
-                lg: '0 20px 40px rgba(0, 0, 0, 0.6)',
-                xl: '0 40px 80px rgba(0, 0, 0, 0.7)',
-                'glow-blue': '0 0 20px rgba(74, 158, 255, 0.3)',
-                'glow-purple': '0 0 20px rgba(183, 148, 246, 0.3)',
+                // Light mode shadows - softer, more subtle
+                sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                DEFAULT: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+                md: '0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06)',
+                lg: '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
+                xl: '0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04)',
+                '2xl': '0 25px 50px rgba(0, 0, 0, 0.15)',
+                'card': '0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)',
+                'card-hover': '0 4px 12px rgba(59, 130, 246, 0.15)',
+                'button': '0 1px 2px rgba(0, 0, 0, 0.05)',
+                'button-hover': '0 4px 6px rgba(59, 130, 246, 0.2)',
             },
             transitionDuration: {
                 'fast': '150ms',
-                'base': '250ms',
-                'slow': '350ms',
-                'slower': '500ms',
+                'normal': '200ms',
+                'slow': '300ms',
+                'slower': '400ms',
             },
             animation: {
                 'spin-slow': 'spin 3s linear infinite',
                 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                'blob': 'blob 7s infinite',
-                'gradient': 'gradient 15s ease infinite',
+                'fade-in': 'fadeIn 200ms ease-out',
+                'slide-up': 'slideUp 200ms ease-out',
+                'scale-in': 'scaleIn 200ms ease-out',
+                'shimmer': 'shimmer 2s infinite',
             },
             keyframes: {
-                blob: {
-                    '0%': { transform: 'translate(0px, 0px) scale(1)' },
-                    '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                    '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-                    '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                fadeIn: {
+                    '0%': { opacity: '0' },
+                    '100%': { opacity: '1' },
                 },
-                gradient: {
-                    '0%, 100%': { backgroundPosition: '0% 50%' },
-                    '50%': { backgroundPosition: '100% 50%' },
-                }
+                slideUp: {
+                    '0%': { opacity: '0', transform: 'translateY(20px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                scaleIn: {
+                    '0%': { opacity: '0', transform: 'scale(0.95)' },
+                    '100%': { opacity: '1', transform: 'scale(1)' },
+                },
+                shimmer: {
+                    '0%': { backgroundPosition: '-1000px 0' },
+                    '100%': { backgroundPosition: '1000px 0' },
+                },
             }
         },
     },

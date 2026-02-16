@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ForecastAI Intelligence Report</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-family: 'Inter', sans-serif;
+                font-size: 9pt;
+                color: #6b7280;
+            }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #1f2937;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Branding Header */
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #4f46e5;
+            /* Indigo 600 */
+            letter-spacing: -1px;
+        }
+
+        .report-title {
+            font-size: 16pt;
+            margin-top: 10px;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Meta Info */
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9pt;
+            color: #6b7280;
+            margin-bottom: 40px;
+        }
+
+        /* Confidence Meter */
+        .confidence-section {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 30px;
+        }
+
+        .confidence-label {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+
+        .confidence-bar-bg {
+            height: 10px;
+            background-color: #e5e7eb;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .confidence-bar-fill {
+            height: 100%;
+            border-radius: 5px;
+        }
+
+        .conf-high {
+            background-color: #22c55e;
+        }
+
+        .conf-medium {
+            background-color: #f59e0b;
+        }
+
+        .conf-low {
+            background-color: #ef4444;
+        }
+
+        /* Sections */
+        h1 {
+            font-size: 18pt;
+            color: #111827;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 5px;
+            margin-top: 40px;
+        }
+
+        h2 {
+            font-size: 14pt;
+            color: #374151;
+            margin-top: 25px;
+        }
+
+        h3 {
+            font-size: 11pt;
+            color: #4b5563;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .executive-summary {
+            font-size: 11pt;
+            padding: 15px;
+            background-color: #f3f4f6;
+            border-left: 4px solid #4f46e5;
+            margin-bottom: 30px;
+        }
+
+        /* KPI Grid */
+        .kpi-grid {
+            display: flex;
+            /* WeasyPrint supports flexbox */
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            flex: 1;
+            min-width: 120px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .kpi-value {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .kpi-label {
+            font-size: 9pt;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 10pt;
+        }
+
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        /* Opportunities List */
+        .opportunity-item {
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 3px solid #10b981;
+            /* Green */
+        }
+
+        .opportunity-title {
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .opportunity-desc {
+            font-size: 10pt;
+            color: #4b5563;
+        }
+
+        /* Charts - placeholder for base64 images */
+        .chart-container {
+            text-align: center;
+            margin: 30px 0;
+            page-break-inside: avoid;
+        }
+
+        .chart-img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+
+        .risk-alert {
+            color: #b45309;
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 9pt;
+            margin-top: 5px;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">ForecastAI</div>
+        <div class="report-title">Intelligence Report: {{ domain | default('General Analysis') }}</div>
+    </div>
+
+    <!-- Meta Info -->
+    <div class="meta-info">
+        <div>Generated: {{ generated_date }}</div>
+        <div>Report ID: {{ report_id }}</div>
+        <div>Dataset: {{ filename }}</div>
+    </div>
+
+    <!-- Confidence Section -->
+    <div class="confidence-section">
+        <div class="confidence-label">
+            Analysis Confidence: {{ confidence_score }}/100
+            {% if confidence_score >= 85 %} (HIGH)
+            {% elif confidence_score >= 60 %} (MEDIUM)
+            {% else %} (EXPLORATORY)
+            {% endif %}
+        </div>
+        <div class="confidence-bar-bg">
+            <div class="confidence-bar-fill {% if confidence_score >= 85 %}conf-high{% elif confidence_score >= 60 %}conf-medium{% else %}conf-low{% endif %}"
+                style="width: {{ confidence_score }}%;"></div>
+        </div>
+        {% if confidence_score < 60 %} <div class="risk-alert">
+            ℹ️ <strong>Exploratory Mode:</strong> This analysis is based on limited data. Recommendations should be
+            treated as directional.
+    </div>
+    {% endif %}
+    </div>
+
+    <!-- Executive Summary -->
+    <h1>Executive Summary</h1>
+    <div class="executive-summary">
+        {{ executive_summary }}
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="kpi-grid">
+        {% for kpi in key_metrics %}
+        <div class="kpi-card">
+            <div class="kpi-value">{{ kpi.value }}</div>
+            <div class="kpi-label">{{ kpi.label }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Opportunities -->
+    <h2>Business Opportunities</h2>
+    {% for insight in insights %}
+    <div class="opportunity-item">
+        <div class="opportunity-title">{{ insight.title }}</div>
+        <div class="opportunity-desc">{{ insight.description }}</div>
+        {% if insight.action %}
+        <div style="font-size: 9pt; color: #059669; margin-top: 2px;">Recommended Action: {{ insight.action }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Risks -->
+    {% if risks %}
+    <h2>Risk Assessment</h2>
+    {% for risk in risks %}
+    <div
+        style="margin-bottom: 15px; padding: 10px; border-radius: 6px; background-color: {% if risk.severity == 'High' %}#fff1f2{% else %}#fffbeb{% endif %}; border: 1px solid {% if risk.severity == 'High' %}#fecdd3{% else %}#fcd34d{% endif %};">
+        <div style="font-weight: bold; color: {% if risk.severity == 'High' %}#be123c{% else %}#b45309{% endif %};">
+            {{ risk.title }} <span style="font-size: 8pt; text-transform: uppercase;">[{{ risk.severity }}
+                Severity]</span>
+        </div>
+        <div style="font-size: 10pt; color: #374151; margin-top: 2px;">{{ risk.description }}</div>
+        {% if risk.mitigation %}
+        <div style="font-size: 9pt; color: #4b5563; margin-top: 4px; font-style: italic;">Mitigation: {{ risk.mitigation
+            }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Financial Outlook -->
+    <div class="page-break"></div>
+    <h1>Financial Outlook</h1>
+
+    {% if financial_metrics %}
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-value">{{ financial_metrics.projected_revenue }}</div>
+            <div class="kpi-label">Projected Revenue</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">{{ financial_metrics.gross_margin }}</div>
+            <div class="kpi-label">Gross Margin</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">{{ financial_metrics.margin_percent }}</div>
+            <div class="kpi-label">Profitability</div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if financial_chart %}
+    <div class="chart-container">
+        <h3>Projected Financial Breakdown</h3>
+        <img src="data:image/png;base64,{{ financial_chart }}" class="chart-img" alt="Financial Chart"
+            style="max-height: 300px;">
+    </div>
+    {% endif %}
+
+    <!-- Strategic Action Plan -->
+    {% if action_plan %}
+    <h2>Strategic Action Plan</h2>
+
+    {% if action_plan.immediate %}
+    <h3>Immediate Actions (This Week)</h3>
+    <ul>
+        {% for item in action_plan.immediate %}
+        <li style="margin-bottom: 5px; color: #374151;">{{ item }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if action_plan.short_term %}
+    <h3>Short Term Focus (Next 30 Days)</h3>
+    <ul>
+        {% for item in action_plan.short_term %}
+        <li style="margin-bottom: 5px; color: #374151;">{{ item }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if action_plan.strategic %}
+    <h3>Strategic Goals (Quarterly)</h3>
+    <ul>
+        {% for item in action_plan.strategic %}
+        <li style="margin-bottom: 5px; color: #374151;">{{ item }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endif %}
+
+    <!-- Data Gaps as Opportunities -->
+    {% if gaps %}
+    <div class="page-break"></div>
+    <h2>Data Enrichment Opportunities</h2>
+    <p style="font-size: 10pt; color: #4b5563; margin-bottom: 15px;">
+        To unlock higher-precision forecasting models, we recommend the following data strategies:
+    </p>
+    {% for gap in gaps %}
+    <div class="opportunity-item" style="border-left-color: #6366f1;">
+        <div class="opportunity-title">{{ gap.business_opportunity }}</div>
+        <div class="opportunity-desc">
+            Technical Gap: Missing {{ gap.column_name }} data.<br>
+            Benefit: {{ gap.benefit }}
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="page-break"></div>
+
+    <!-- Visual Analysis -->
+    <h1>Detailed Visual Analysis</h1>
+
+    {% if forecast_chart %}
+    <div class="chart-container">
+        <h3>Forecast Projection</h3>
+        <img src="data:image/png;base64,{{ forecast_chart }}" class="chart-img" alt="Forecast Chart">
+        <p style="font-size: 9pt; color: #6b7280; margin-top: 5px;">
+            Projection includes {{ confidence_interval }}% confidence intervals showing range of probable outcomes.
+        </p>
+    </div>
+    {% endif %}
+
+    {% if seasonality_chart %}
+    <div class="chart-container">
+        <h3>Seasonality & Trends</h3>
+        <img src="data:image/png;base64,{{ seasonality_chart }}" class="chart-img" alt="Seasonality Chart">
+    </div>
+    {% endif %}
+
+    <h2>Model Performance</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Interpretation</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>MAPE</td>
+                <td>{{ model_metrics.mape }}%</td>
+                <td>Average percentage error (Lower is better)</td>
+            </tr>
+            <tr>
+                <td>RMSE</td>
+                <td>{{ model_metrics.rmse }}</td>
+                <td>Error magnitude in unit terms</td>
+            </tr>
+            <tr>
+                <td>Model Used</td>
+                <td>{{ model_metrics.model_type }}</td>
+                <td>Selected for best performance on this dataset</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <!-- Recommendations -->
+    <h1>Strategic Recommendations</h1>
+    {% for rec in recommendations %}
+    <div style="margin-bottom: 20px;">
+        <div style="font-weight: bold; color: #111827; font-size: 11pt;">{{ loop.index }}. {{ rec.action }}</div>
+        <div style="color: #4b5563; font-size: 10pt; margin-top: 3px;">Expected Outcome: {{ rec.outcome }}</div>
+    </div>
+    {% endfor %}
+
+    <!-- Disclaimer footer on last page -->
+    <div
+        style="margin-top: 50px; border-top: 1px solid #e5e7eb; padding-top: 10px; font-size: 8pt; color: #9ca3af; text-align: center;">
+        Confidential Report generated by ForecastAI. The predictions contained herein are probabilistic estimates based
+        on historical data provided. Use for decision support only.
+    </div>
+
+</body>
+
+</html>

@@ -89,13 +89,13 @@ export const AuthProvider = ({ children }) => {
                 localStorage.setItem('token', data.session.access_token);
                 return { success: true };
             } else {
-                // Local backend auth
-                const formData = new FormData();
-                formData.append('username', email);
-                formData.append('password', password);
+                // Local backend auth - Use x-www-form-urlencoded (Standard OAuth2)
+                const params = new URLSearchParams();
+                params.append('username', email);
+                params.append('password', password);
 
-                const response = await api.post('/api/auth/login', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
+                const response = await api.post('/api/auth/login', params, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                 });
 
                 const { access_token, user: userData } = response.data;
@@ -172,6 +172,29 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
+    // Login with existing token (for OAuth callback)
+    const loginWithToken = useCallback(async (accessToken) => {
+        setLoading(true);
+        try {
+            localStorage.setItem('token', accessToken);
+            setToken(accessToken);
+
+            // Verify token and get user data
+            const response = await api.get('/api/auth/me');
+            setUser(response.data);
+            return { success: true };
+        } catch (err) {
+            console.error('Token login failed:', err);
+            localStorage.removeItem('token');
+            setToken(null);
+            setUser(null);
+            setError('Authentication failed');
+            return { success: false, error: 'Authentication failed' };
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     // Logout function
     const logout = useCallback(async () => {
         try {
@@ -196,6 +219,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         loginWithProvider,
+        loginWithToken,
         logout,
     };
 

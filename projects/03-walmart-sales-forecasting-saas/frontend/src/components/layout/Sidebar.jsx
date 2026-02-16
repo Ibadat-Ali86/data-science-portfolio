@@ -42,7 +42,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar }) => {
     };
 
     return (
-        <aside className={`${isCollapsed ? 'w-20' : 'w-64'} transition-all duration-300 ease-in-out fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[var(--border-primary)] shadow-2xl`}
+        <aside className={`hidden md:flex ${isCollapsed ? 'w-20' : 'w-64'} transition-all duration-300 ease-in-out fixed inset-y-0 left-0 z-50 flex-col border-r border-[var(--border-primary)] shadow-2xl`}
             style={{ background: 'var(--bg-secondary)' }}>
 
             {/* Logo */}
@@ -53,7 +53,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar }) => {
                         <TrendingUp className="w-6 h-6 text-white" />
                     </div>
                     {!isCollapsed && (
-                        <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>ForecastAI</span>
+                        <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>AdaptIQ</span>
                     )}
                 </div>
                 {!isCollapsed && (
