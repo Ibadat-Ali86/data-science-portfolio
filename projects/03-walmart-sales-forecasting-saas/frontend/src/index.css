@@ -961,7 +961,7 @@ select:-webkit-autofill {
 
 /* Premium white glass card for internal pages */
 .card-premium {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.45);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(226, 232, 240, 0.8);

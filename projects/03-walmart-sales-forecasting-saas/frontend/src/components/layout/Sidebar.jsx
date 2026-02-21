@@ -50,8 +50,8 @@ const Sidebar = ({ isCollapsed, toggleSidebar, onLinkClick }) => {
             ${isCollapsed ? 'w-20' : 'w-64'}
             transition-all duration-300 ease-in-out
             flex flex-col h-[100dvh]
-            bg-white/95 backdrop-blur-xl
-            border-r border-slate-200/80
+            bg-white/40 dark:bg-dark-elem/60 backdrop-blur-xl
+            border-r border-slate-200/50 dark:border-dark-border
             shadow-[4px_0_32px_rgba(0,0,0,0.06)]
             overflow-hidden
         `}>
