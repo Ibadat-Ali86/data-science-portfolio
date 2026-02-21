@@ -36,17 +36,19 @@ const Layout = ({ children, title }) => {
     }, []);
 
     return (
-        <div className="flex min-h-screen text-text-primary relative overflow-hidden font-sans antialiased" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #f0f4ff 50%, #f8fffe 100%)' }}>
-            <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
+        <div className="flex min-h-screen text-text-primary relative overflow-hidden font-sans antialiased">
+            {/* ── Page background (below everything, including the mesh) ── */}
+            <div className="fixed inset-0 z-[-1]" style={{ background: 'linear-gradient(135deg, #f0f4ff 0%, #f8fafc 50%, #f0fff8 100%)' }} />
 
-            {/* Background Effects */}
-            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+            {/* ── Rainbow Mesh Cursor — sits above page bg but below all content ── */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
                 <RainbowMeshCursor />
-                {/* Particle Network */}
-                <div className="absolute inset-0 opacity-60">
+            </div>
+            {/* ── Animated ambient blobs (fixed, above mesh) ── */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 2 }}>
+                <div className="absolute inset-0 opacity-50">
                     <ParticleCanvas />
                 </div>
-                {/* Animated blob gradients */}
                 <motion.div
                     animate={{ rotate: 360, scale: [1, 1.15, 1] }}
                     transition={{ duration: 35, repeat: Infinity, ease: 'linear' }}
@@ -58,6 +60,8 @@ const Layout = ({ children, title }) => {
                     className="absolute -bottom-32 -right-32 w-[600px] h-[600px] rounded-full bg-accent-400/8 blur-[130px]"
                 />
             </div>
+
+            <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
 
             {/* ── MOBILE: Overlay Backdrop ── */}
             <AnimatePresence>
@@ -113,7 +117,7 @@ const Layout = ({ children, title }) => {
                     onMenuClick={() => setIsMobileOpen(prev => !prev)}
                 />
 
-                <main className="flex-1 p-4 sm:p-6 lg:p-8" style={{ background: 'linear-gradient(180deg, rgba(240, 248, 255, 0.4) 0%, rgba(248, 250, 252, 0.6) 100%)' }}>
+                <main className="flex-1 p-4 sm:p-6 lg:p-8" style={{ background: 'transparent' }}>
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
