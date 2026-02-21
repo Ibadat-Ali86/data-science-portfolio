@@ -1,30 +1,52 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { FlowProvider } from './context/FlowContext'
 import { ToastProvider } from './context/ToastContext'
 import ProtectedRoute from './components/common/ProtectedRoute'
+import { useState, useEffect, lazy, Suspense } from 'react'
+import { WifiOff, Loader2 } from 'lucide-react'
+import { AnimatePresence } from 'framer-motion'
+
+// Eager load critical pages
 import Landing from './pages/Landing'
-import Login from './pages/Login'
-import Register from './pages/Register'
 import { AuthPage } from './pages/auth'
-import Dashboard from './pages/Dashboard'
-import DataUpload from './pages/DataUpload'
-import ForecastExplorer from './pages/ForecastExplorer'
-import ScenarioSimulator from './pages/ScenarioSimulator'
-import Reports from './pages/Reports'
-import AnalysisDashboard from './pages/AnalysisDashboard'
-import ExecutiveDashboard from './pages/ExecutiveDashboard'
-import ScenarioPlanningStudio from './pages/ScenarioPlanningStudio'
-import MobileNav from './components/layout/MobileNav'
-
-
 import AuthCallback from './pages/AuthCallback'
+
+// Lazy load dashboard and feature pages
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const DataUpload = lazy(() => import('./pages/DataUpload'));
+const ForecastExplorer = lazy(() => import('./pages/ForecastExplorer'));
+const ScenarioSimulator = lazy(() => import('./pages/ScenarioSimulator'));
+const Reports = lazy(() => import('./pages/Reports'));
+const AnalysisDashboard = lazy(() => import('./pages/AnalysisDashboard'));
+const ExecutiveDashboard = lazy(() => import('./pages/ExecutiveDashboard'));
+const ScenarioPlanningStudio = lazy(() => import('./pages/ScenarioPlanningStudio'));
+const MonitoringDashboard = lazy(() => import('./pages/MonitoringDashboard'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Profile = lazy(() => import('./pages/Profile'));
+
+import MobileNav from './components/layout/MobileNav'
+import BusinessLayout from './components/layout/BusinessLayout'
 import ReloadPrompt from './components/common/ReloadPrompt'
-import { useState, useEffect } from 'react'
-import { WifiOff } from 'lucide-react'
+import PWAInstallPrompt from './components/pwa/PWAInstallPrompt'
+import PWAStatus from './components/pwa/PWAStatus'
+import PageTransition from './components/animations/PageTransition'
+import EnterpriseErrorBoundary from './components/common/EnterpriseErrorBoundary'
+import ApiErrorListener from './components/common/ApiErrorListener'
+
+// Loading Fallback
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-bg-primary">
+    <div className="flex flex-col items-center gap-4">
+      <Loader2 className="w-10 h-10 text-brand-600 animate-spin" />
+      <p className="text-text-secondary font-medium animate-pulse">Loading module...</p>
+    </div>
+  </div>
+);
 
 function App() {
+  const location = useLocation();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   useEffect(() => {
@@ -45,33 +67,46 @@ function App() {
       <AuthProvider>
         <FlowProvider>
           <ToastProvider>
-            <div className="App premium-bg pb-20 md:pb-0">
-              <ReloadPrompt />
-              <MobileNav />
-              {isOffline && (
-                <div className="bg-red-600 text-white text-xs font-bold text-center py-1 fixed top-0 w-full z-[100]">
-                  <div className="flex items-center justify-center gap-2">
-                    <WifiOff className="w-3 h-3" />
-                    OFFLINE MODE - Changes may not save
-                  </div>
-                </div>
-              )}
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/upload" element={<ProtectedRoute><DataUpload /></ProtectedRoute>} />
-                <Route path="/analysis" element={<ProtectedRoute><AnalysisDashboard /></ProtectedRoute>} />
-                <Route path="/forecast-explorer" element={<ProtectedRoute><ForecastExplorer /></ProtectedRoute>} />
-                <Route path="/scenario-simulator" element={<ProtectedRoute><ScenarioSimulator /></ProtectedRoute>} />
-                <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-                <Route path="/executive" element={<ProtectedRoute><ExecutiveDashboard /></ProtectedRoute>} />
-                <Route path="/scenario-planning" element={<ProtectedRoute><ScenarioPlanningStudio /></ProtectedRoute>} />
-              </Routes>
-            </div>
+            <EnterpriseErrorBoundary>
+              <div className="App premium-bg pb-20 md:pb-0">
+                <a href="#main-content" className="skip-link">
+                  Skip to main content
+                </a>
+                <ReloadPrompt />
+                <MobileNav />
+
+                {/* Phase 1: PWA Components & Global Listeners */}
+                <ApiErrorListener />
+                <PWAStatus />
+                <PWAInstallPrompt />
+
+                <Suspense fallback={<PageLoader />}>
+                  <AnimatePresence mode="wait">
+                    <Routes location={location} key={location.pathname}>
+                      <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
+                      <Route path="/login" element={<PageTransition><AuthPage /></PageTransition>} />
+                      <Route path="/register" element={<PageTransition><AuthPage /></PageTransition>} />
+                      <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
+                      <Route path="/auth/callback" element={<AuthCallback />} />
+
+                      <Route element={<ProtectedRoute><BusinessLayout /></ProtectedRoute>}>
+                        <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+                        <Route path="/upload" element={<PageTransition><DataUpload /></PageTransition>} />
+                        <Route path="/analysis" element={<PageTransition><AnalysisDashboard /></PageTransition>} />
+                        <Route path="/forecast-explorer" element={<PageTransition><ForecastExplorer /></PageTransition>} />
+                        <Route path="/scenario-simulator" element={<PageTransition><ScenarioSimulator /></PageTransition>} />
+                        <Route path="/reports" element={<PageTransition><Reports /></PageTransition>} />
+                        <Route path="/executive" element={<PageTransition><ExecutiveDashboard /></PageTransition>} />
+                        <Route path="/scenario-planning" element={<PageTransition><ScenarioPlanningStudio /></PageTransition>} />
+                        <Route path="/monitoring" element={<PageTransition><MonitoringDashboard /></PageTransition>} />
+                        <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
+                        <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
+                      </Route>
+                    </Routes>
+                  </AnimatePresence>
+                </Suspense>
+              </div>
+            </EnterpriseErrorBoundary>
           </ToastProvider>
         </FlowProvider>
       </AuthProvider>

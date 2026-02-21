@@ -134,7 +134,7 @@ const ExecutiveDashboard = ({ forecastData, historicalData, businessInsights }) 
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -196,10 +196,10 @@ const ExecutiveDashboard = ({ forecastData, historicalData, businessInsights }) 
                 >
                     <div className="flex items-center justify-between mb-4">
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${risks.risk_level === 'High' ? 'bg-error-100' :
-                                risks.risk_level === 'Medium' ? 'bg-warning-100' : 'bg-success-100'
+                            risks.risk_level === 'Medium' ? 'bg-warning-100' : 'bg-success-100'
                             }`}>
                             <AlertTriangle className={`w-6 h-6 ${risks.risk_level === 'High' ? 'text-error-600' :
-                                    risks.risk_level === 'Medium' ? 'text-warning-600' : 'text-success-600'
+                                risks.risk_level === 'Medium' ? 'text-warning-600' : 'text-success-600'
                                 }`} />
                         </div>
                         <span className="text-sm font-medium text-gray-600">{risks.risk_level || 'Low'}</span>

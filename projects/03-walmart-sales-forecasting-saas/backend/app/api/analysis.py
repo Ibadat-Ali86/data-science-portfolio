@@ -18,6 +18,11 @@ from app.ml.xgboost_model import XGBoostForecaster
 from app.ml.sarima_model import SARIMAForecaster
 from app.ml.ensemble_model import EnsembleForecaster
 
+# Phase 0: Foundation Components
+from app.utils.data_adapter import DataAdapter, validate_adapted_data
+from app.utils.pipeline_validator import PipelineValidator, ValidationError
+from app.utils.model_router import ModelRouter, ModelType
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -158,8 +163,8 @@ async def init_session_from_path(request: InitSessionRequest):
         # Generate Session ID
         session_id = str(uuid.uuid4())
         
-        # Store in session state
-        analysis_sessions[session_id] = {
+        # Store in session state (use training_jobs for consistency)
+        training_jobs[session_id] = {
             'id': session_id,
             'filename': request.filename,
             'upload_time': datetime.now().isoformat(),
@@ -168,6 +173,7 @@ async def init_session_from_path(request: InitSessionRequest):
             'data': df.to_dict('records'), # Store full data in memory (for MVP)
             'status': 'uploaded'
         }
+        save_jobs()
         
         logger.info(f"Initialized session {session_id} from {request.file_path}")
         
@@ -183,6 +189,162 @@ async def init_session_from_path(request: InitSessionRequest):
     except Exception as e:
         logger.error(f"Session initialization failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/detect-columns")
+async def detect_columns(file: UploadFile = File(...)):
+    """
+    Detect and classify columns in an uploaded file.
+    Returns column roles with confidence scores for SmartUploadZone.
+    Supports CSV, Excel, TSV files.
+    """
+    logger.info(f"🔍 Column detection request: {file.filename}")
+
+    allowed_extensions = {'.csv', '.xlsx', '.xls', '.tsv'}
+    ext = '.' + file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+
+    if ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file format '{ext}'. Supported: {', '.join(allowed_extensions)}"
+        )
+
+    try:
+        contents = await file.read()
+
+        # Parse file based on extension
+        if ext == '.csv' or ext == '.tsv':
+            sep = '\t' if ext == '.tsv' else ','
+            decoded = None
+            for encoding in ['utf-8', 'latin-1', 'cp1252', 'ISO-8859-1']:
+                try:
+                    decoded = contents.decode(encoding)
+                    break
+                except UnicodeDecodeError:
+                    continue
+            if decoded is None:
+                raise HTTPException(status_code=400, detail="Could not decode file encoding.")
+            df = pd.read_csv(io.StringIO(decoded), sep=sep, nrows=100)
+        elif ext in ('.xlsx', '.xls'):
+            df = pd.read_excel(io.BytesIO(contents), nrows=100)
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file format")
+
+        # Use DataAdapter for intelligent column detection
+        adapter = DataAdapter()
+        df_adapted, metadata = adapter.adapt_dataframe(df)
+
+        detected_columns = metadata.get('detected_columns', {})
+        original_columns = list(df.columns)
+
+        # Build response with confidence scores
+        column_info = {}
+        for col in original_columns:
+            role = None
+            confidence = 0.0
+            suggestions = []
+
+            # Check if this column was mapped to a role
+            for role_name, mapped_col in detected_columns.items():
+                if mapped_col == col:
+                    role = role_name
+                    # Assign confidence based on detection quality
+                    if role_name == 'date':
+                        try:
+                            pd.to_datetime(df[col].dropna().head(10))
+                            confidence = 0.95
+                        except Exception:
+                            confidence = 0.60
+                    elif role_name == 'target':
+                        if pd.api.types.is_numeric_dtype(df[col]):
+                            confidence = 0.90
+                        else:
+                            confidence = 0.55
+                    elif role_name in ('store', 'product', 'category'):
+                        confidence = 0.75
+                    else:
+                        confidence = 0.70
+                    break
+
+            # If not detected, try heuristics
+            if role is None:
+                col_lower = col.lower()
+                if any(kw in col_lower for kw in ['date', 'time', 'week', 'month', 'year', 'day', 'period']):
+                    role = 'date'
+                    confidence = 0.70
+                elif any(kw in col_lower for kw in ['sales', 'revenue', 'amount', 'qty', 'quantity', 'units', 'demand', 'target', 'value']):
+                    role = 'target'
+                    confidence = 0.65
+                elif any(kw in col_lower for kw in ['store', 'shop', 'location', 'branch', 'outlet']):
+                    role = 'store'
+                    confidence = 0.70
+                elif any(kw in col_lower for kw in ['product', 'item', 'sku', 'category', 'dept', 'department']):
+                    role = 'product'
+                    confidence = 0.70
+                else:
+                    role = 'unknown'
+                    confidence = 0.30
+
+            # Generate suggestions (alternative column names for this role)
+            role_suggestions = {
+                'date': ['Order Date', 'Transaction Date', 'Week', 'Period'],
+                'target': ['Sales', 'Revenue', 'Quantity', 'Demand', 'Units Sold'],
+                'store': ['Store ID', 'Location', 'Branch', 'Shop'],
+                'product': ['Product ID', 'SKU', 'Item', 'Category'],
+                'unknown': []
+            }
+            suggestions = [s for s in role_suggestions.get(role, []) if s != col][:3]
+
+            # Sample values for preview
+            sample_values = df[col].dropna().head(3).astype(str).tolist()
+
+            column_info[col] = {
+                'role': role,
+                'confidence': round(confidence, 2),
+                'suggestions': suggestions,
+                'dtype': str(df[col].dtype),
+                'sample_values': sample_values,
+                'missing_percent': round(df[col].isnull().mean() * 100, 1)
+            }
+
+        # Quality score
+        quality_score = metadata.get('quality_score', 100)
+        issues = metadata.get('issues', [])
+
+        logger.info(f"✅ Column detection complete: {len(column_info)} columns, quality={quality_score}")
+
+        # Derive recommended columns from highest-confidence detections
+        recommended_date = None
+        recommended_target = None
+        best_date_conf = 0.0
+        best_target_conf = 0.0
+        for col_name, info in column_info.items():
+            if info['role'] == 'date' and info['confidence'] > best_date_conf:
+                recommended_date = col_name
+                best_date_conf = info['confidence']
+            elif info['role'] == 'target' and info['confidence'] > best_target_conf:
+                recommended_target = col_name
+                best_target_conf = info['confidence']
+
+        return {
+            'success': True,
+            'filename': file.filename,
+            'total_rows': len(df),
+            'total_columns': len(original_columns),
+            'columns': column_info,
+            'quality_score': quality_score,
+            'issues': issues,
+            'recommended_date_column': recommended_date,
+            'recommended_target_column': recommended_target,
+            'sample_data': df.head(5).replace({np.nan: None}).to_dict('records')
+        }
+
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Column detection failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Column detection failed: {str(e)}")
 
 
 @router.post("/upload")
@@ -218,22 +380,43 @@ async def upload_dataset(file: UploadFile = File(...)):
             
         df = pd.read_csv(io.StringIO(decoded_content))
         
-        # Basic validation
-        if len(df) == 0:
-            raise HTTPException(status_code=400, detail="Empty dataset")
+        # PHASE 0: Data Adapter - Auto-detect columns
+        adapter = DataAdapter()
+        df_adapted, metadata = adapter.adapt_dataframe(df)
+        
+        logger.info(f"📊 Data adapted: {metadata['detected_columns']}")
+        
+        # PHASE 0: Validation Gate - Upload stage
+        validator = PipelineValidator()
+        try:
+            validation_result = validator.validate_upload(df_adapted)
+            logger.info(f"✅ Upload validation passed: {validation_result['info']}")
+        except ValidationError as ve:
+            logger.error(f"❌ Upload validation failed: {ve.message}")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    'error': ve.message,
+                    'suggestion': ve.suggestion,
+                    'stage': ve.stage
+                }
+            )
         
         # Generate session ID for this dataset
         session_id = str(uuid.uuid4())
         logger.info(f"📤 New upload session created: {session_id} ({file.filename})")
         
-        # Store in memory first
+        # Store in memory first (with adapted data and metadata)
         training_jobs[session_id] = {
             'status': 'uploaded',
-            'data': df.to_dict('records'),
+            'data': df_adapted.to_dict('records'),
             'filename': file.filename,
-            'rows': len(df),
-            'columns': list(df.columns),
-            'uploaded_at': datetime.now().isoformat()
+             'rows': len(df_adapted),
+            'columns': list(df_adapted.columns),
+            'uploaded_at': datetime.now().isoformat(),
+            'adapter_metadata': metadata,  # Store column mappings
+            'validation_warnings': validation_result.get('warnings', []),
+            'quality_score': metadata.get('quality_score', 100)
         }
         
         # CRITICAL: Save synchronously and verify
@@ -249,10 +432,17 @@ async def upload_dataset(file: UploadFile = File(...)):
         return {
             'session_id': session_id,
             'filename': file.filename,
-            'rows': len(df),
-            'columns': list(df.columns),
-            'sample_data': df.head(5).replace({np.nan: None}).to_dict('records'),
-            'summary': df.describe().replace({np.nan: None}).to_dict()
+            'rows': len(df_adapted),
+            'columns': list(df_adapted.columns),
+            'sample_data': df_adapted.head(5).replace({np.nan: None}).to_dict('records'),
+            'summary': df_adapted.describe().replace({np.nan: None}).to_dict(),
+            'adapter_info': {
+                'detected_columns': metadata.get('detected_columns', {}),
+                'data_shape': metadata.get('data_shape', 'long'),
+                'issues': metadata.get('issues', []),
+                'quality_score': metadata.get('quality_score', 100)
+            },
+            'validation_warnings': validation_result.get('warnings', [])
         }
         
     except HTTPException:
@@ -291,11 +481,12 @@ async def profile_dataset(session_id: str, request: DataProfileRequest):
     df = pd.DataFrame(job['data'])
     
     # GATE 3: Profiling Validation
-    from ..services.pipeline_validator import PipelineValidator
-    profile_validation = PipelineValidator.validate_profiling(df)
-    if not profile_validation['valid']:
+    from app.utils.pipeline_validator import PipelineValidator
+    validator = PipelineValidator()
+    profile_validation = validator.validate_profile(df)
+    if not profile_validation['passed']:
         # We don't block profiling but we warn heavily
-        logger.warning(f"Profiling Data Quality Issues: {profile_validation['issues']}")
+        logger.warning(f"Profiling Data Quality Issues: {profile_validation['warnings']}")
         # We could potentially inject these issues into the profile result
     
     # --- Date Synthesis Logic (for Warehouse_and_Retail_Sales.csv) ---
@@ -437,7 +628,7 @@ async def profile_dataset(session_id: str, request: DataProfileRequest):
 
     # --- Phase 2.2: Data Quality Scorecard ---
     try:
-        from app.services.data_adapter import DataAdapter
+        from app.utils.data_adapter import DataAdapter
         adapter = DataAdapter()
         scorecard = adapter.generate_quality_scorecard(df)
         profile['quality_scorecard'] = scorecard
@@ -468,19 +659,24 @@ async def profile_dataset(session_id: str, request: DataProfileRequest):
         logger.info(f"Generated {len(kpis)} dynamic KPIs for domain: {domain_report.domain}")
         
         # --- Phase 12: Adaptive Narrative Report ---
-        from app.services.report_generator import report_generator
-        narrative = report_generator.generate_narrative(
-            domain_report.domain_key,
-            kpis,
-            profile
-        )
-        profile['narrative_report'] = narrative
-        
+        try:
+            from app.services.report_generator import report_generator
+            narrative = report_generator.generate_narrative(
+                domain_report.domain_key,
+                kpis,
+                profile
+            )
+            profile['narrative_report'] = narrative
+        except Exception as e:
+            logger.error(f"Failed to generate narrative report: {e}")
+            profile['narrative_report'] = None
+            
     except Exception as e:
         logger.error(f"Failed to generate dynamic KPIs/Report: {e}")
         profile['dynamic_kpis'] = []
         profile['domain_analysis'] = None
-        profile['narrative_report'] = None
+        if 'narrative_report' not in profile:
+             profile['narrative_report'] = None
     
     # Update job status
     training_jobs[session_id]['status'] = 'profiled'
@@ -507,7 +703,7 @@ async def preprocess_dataset(session_id: str):
         job = training_jobs[session_id]
         df = pd.DataFrame(job['data'])
         
-        from app.services.data_adapter import DataAdapter
+        from app.utils.data_adapter import DataAdapter
         adapter = DataAdapter()
         
         # Apply normalization and preprocessing
@@ -573,7 +769,7 @@ async def preprocess_dataset(session_id: str):
             "success": True,
             "rows": len(df_clean),
             "features": len(df_clean.columns),
-            "new_features": newFeatures,
+            "new_features": new_features,
             "log": log,
             "sample": df_clean.head(5).astype(str).to_dict('records')
         }
@@ -649,10 +845,25 @@ async def run_training(
     confidence_level: float
 ):
     """Background task to run model training"""
+    from app.services.websocket_manager import manager
+    
+    async def update_status(progress: int, step: str, status: str = 'training'):
+        """Helper to update job status and broadcast via WebSocket"""
+        training_jobs[job_id]['status'] = status
+        training_jobs[job_id]['progress'] = progress
+        training_jobs[job_id]['current_step'] = step
+        
+        # Broadcast to session
+        await manager.broadcast_to_session(session_id, {
+            "type": "training_update",
+            "job_id": job_id,
+            "status": status,
+            "progress": progress,
+            "step": step
+        })
+
     try:
-        training_jobs[job_id]['status'] = 'training'
-        training_jobs[job_id]['progress'] = 10
-        training_jobs[job_id]['current_step'] = 'Loading data...'
+        await update_status(10, 'Loading data...')
         
         # Get data
         if session_id not in training_jobs:
@@ -660,14 +871,59 @@ async def run_training(
              
         df = pd.DataFrame(training_jobs[session_id]['data'])
         
-        training_jobs[job_id]['progress'] = 20
-        training_jobs[job_id]['current_step'] = 'Preparing features...'
+        # --- Handle Column Mismatches (Frontend vs Backend) ---
+        # Preprocessing standardizes columns to 'sales' and 'date'. 
+        # If the original frontend requested name is missing, fall back to the standardized names.
+        if target_col not in df.columns:
+            if 'sales' in df.columns:
+                logger.info(f"Mapping target '{target_col}' -> 'sales' (standardized)")
+                target_col = 'sales'
+            else:
+                for col in df.columns:
+                    if col.lower() == target_col.lower():
+                        logger.info(f"Mapping target '{target_col}' -> '{col}'")
+                        target_col = col
+                        break
+                    
+        if date_col not in df.columns:
+            if 'date' in df.columns:
+                logger.info(f"Mapping date '{date_col}' -> 'date' (standardized)")
+                date_col = 'date'
+            else:
+                 for col in df.columns:
+                    if col.lower() == date_col.lower():
+                        logger.info(f"Mapping date '{date_col}' -> '{col}'")
+                        date_col = col
+                        break
+        
+        await update_status(20, 'Preparing features...')
         
         # Initialize Model Router
         from app.services.model_router import ModelRouter
         from app.ml.baseline_models import NaiveForecaster, MovingAverageForecaster
         
+        # Import circuit breaker for resilience
+        try:
+            from app.utils.circuit_breaker import ml_training_breaker
+            use_circuit_breaker = True
+        except ImportError:
+            use_circuit_breaker = False
+            logger.warning("Circuit breaker not available, proceeding without it")
+        
         router = ModelRouter()
+        
+        # Check circuit breaker before attempting training
+        if use_circuit_breaker and ml_training_breaker.state.value == 'open':
+            logger.error(f"⚡ Circuit breaker OPEN for ml_training - refusing training job {job_id}")
+            training_jobs[job_id]['status'] = 'failed'
+            training_jobs[job_id]['error'] = 'ML training service temporarily unavailable (circuit breaker open). Please try again in 2 minutes.'
+            save_jobs()
+            await manager.broadcast_to_session(session_id, {
+                "type": "training_error",
+                "job_id": job_id,
+                "error": training_jobs[job_id]['error']
+            })
+            return
         
         # Determine model candidates
         candidates = []
@@ -694,13 +950,13 @@ async def run_training(
         metrics = None
         used_model_name = None
         
-        # Iterate through candidates (Fallback Loop)
+        # Iterate through candidates (Fallback Loop with circuit breaker)
         for candidate in candidates:
             if candidate not in model_classes:
                 continue
                 
             try:
-                training_jobs[job_id]['current_step'] = f'Training {candidate}...'
+                await update_status(training_jobs[job_id]['progress'] + 5, f'Training {candidate}...')
                 logger.info(f"Attempting to train {candidate}...")
                 
                 model_instance = model_classes[candidate]()
@@ -710,7 +966,9 @@ async def run_training(
                 if metrics_result.mape is None or np.isnan(metrics_result.mape):
                     raise ValueError("Model returned invalid metrics")
                 
-                # Success!
+                # Success! Record on circuit breaker
+                if use_circuit_breaker:
+                    ml_training_breaker._on_success()
                 trained_model = model_instance
                 metrics = metrics_result
                 used_model_name = candidate
@@ -719,20 +977,21 @@ async def run_training(
                 
             except Exception as e:
                 logger.warning(f"Training failed for {candidate}: {e}")
+                # Record failure on circuit breaker only for primary model
+                if use_circuit_breaker and candidate == candidates[0]:
+                    ml_training_breaker._on_failure(e)
                 continue
         
         if trained_model is None:
             raise ValueError("All model candidates failed training.")
             
         training_jobs[job_id]['model_type'] = used_model_name # Update actual used model
-        training_jobs[job_id]['progress'] = 70
-        training_jobs[job_id]['current_step'] = 'Generating forecasts...'
+        await update_status(70, 'Generating forecasts...')
         
         # Generate forecast
         forecast = trained_model.predict(forecast_periods, confidence_level)
         
-        training_jobs[job_id]['progress'] = 90
-        training_jobs[job_id]['current_step'] = 'Finalizing results...'
+        await update_status(90, 'Finalizing results...')
         
         # Store results
         training_jobs[job_id]['status'] = 'completed'
@@ -754,6 +1013,7 @@ async def run_training(
             'dates': forecast.dates,
             'predictions': forecast.predictions,
             'lower_bound': forecast.lower_bound,
+
             'upper_bound': forecast.upper_bound,
             'confidence_level': forecast.confidence_level
         }
@@ -827,6 +1087,51 @@ async def get_training_status(job_id: str):
         'error': job.get('error')
     }
 
+@router.get("/logs/{job_id}")
+async def stream_logs(job_id: str):
+    """
+    Stream real-time training logs via Server-Sent Events (SSE).
+    """
+    import asyncio
+    import json
+    from fastapi.responses import StreamingResponse
+
+    async def log_generator():
+        last_progress = -1
+        last_status = None
+        
+        while True:
+            # Check memory, fallback to load_jobs
+            if job_id not in training_jobs:
+                load_jobs()
+                if job_id not in training_jobs:
+                    yield f"data: {json.dumps({'status': 'error', 'step': 'Job not found'})}\n\n"
+                    break
+                    
+            job = training_jobs[job_id]
+            current_progress = job.get('progress', 0)
+            current_status = job.get('status', 'queued')
+            current_step = job.get('current_step', '')
+            
+            if current_progress != last_progress or current_status != last_status:
+                data = {
+                    'status': current_status,
+                    'progress': current_progress,
+                    'step': current_step,
+                    'timestamp': datetime.now().isoformat()
+                }
+                yield f"data: {json.dumps(data)}\n\n"
+                
+                last_progress = current_progress
+                last_status = current_status
+                
+            if current_status in ['completed', 'failed']:
+                break
+                
+            await asyncio.sleep(0.5)
+            
+    return StreamingResponse(log_generator(), media_type="text/event-stream")
+
 
 @router.get("/results/{job_id}")
 async def get_training_results(job_id: str):
@@ -847,6 +1152,7 @@ async def get_training_results(job_id: str):
         'model_type': job['model_type'],
         'metrics': job['metrics'],
         'forecast': job['forecast'],
+        'insights': job.get('business_insights', {}),  # CRITICAL: Include insights
         'training_time': job['metrics'].get('training_time'),
         'accuracy_rating': job['metrics'].get('accuracy_rating')
     }

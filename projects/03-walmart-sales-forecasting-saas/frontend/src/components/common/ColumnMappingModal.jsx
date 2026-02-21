@@ -53,24 +53,24 @@ const ColumnMappingModal = ({ isOpen, onClose, columns, onConfirm, fileInfo }) =
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full border border-gray-200 dark:border-gray-700 overflow-hidden"
+                    className="bg-bg-secondary rounded-xl shadow-2xl max-w-lg w-full border border-border-primary overflow-hidden"
                 >
                     {/* Header */}
-                    <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+                    <div className="p-6 border-b border-border-primary flex justify-between items-center bg-bg-tertiary">
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                <Database className="w-5 h-5 text-blue-500" />
+                            <h3 className="text-xl font-bold text-text-primary flex items-center gap-2">
+                                <Database className="w-5 h-5 text-brand-500" />
                                 Map Your Data
                             </h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                Tell us how to read your file: <span className="font-mono text-xs bg-gray-200 dark:bg-gray-700 px-1 rounded">{fileInfo?.name}</span>
+                            <p className="text-sm text-text-secondary mt-1">
+                                Tell us how to read your file: <span className="font-mono text-xs bg-bg-primary border border-border-primary px-1.5 py-0.5 rounded text-text-primary">{fileInfo?.name}</span>
                             </p>
                         </div>
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+                            className="p-2 hover:bg-bg-secondary rounded-full transition-colors text-text-tertiary hover:text-text-primary"
                         >
-                            <X className="w-5 h-5 text-gray-500" />
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
 
@@ -79,25 +79,25 @@ const ColumnMappingModal = ({ isOpen, onClose, columns, onConfirm, fileInfo }) =
 
                         {/* Time Column Selection */}
                         <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label className="block text-sm font-medium text-text-primary">
                                 1. Which column contains the **Date/Time**?
                             </label>
                             <div className="relative">
                                 <select
                                     value={mappings.date}
                                     onChange={(e) => setMappings(prev => ({ ...prev, date: e.target.value }))}
-                                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono text-sm"
+                                    className="w-full p-3 bg-bg-tertiary border border-border-primary rounded-lg appearance-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all font-mono text-sm text-text-primary"
                                 >
                                     <option value="" disabled>Select Date Column...</option>
                                     {columns.map(col => (
                                         <option key={col} value={col}>{col}</option>
                                     ))}
                                 </select>
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-tertiary">
                                     <ArrowRight className="w-4 h-4 rotate-90" />
                                 </div>
                             </div>
-                            <p className="text-xs text-gray-500 flex items-center gap-1">
+                            <p className="text-xs text-text-tertiary flex items-center gap-1">
                                 <AlertCircle className="w-3 h-3" />
                                 Used to track trends over time.
                             </p>
@@ -105,25 +105,25 @@ const ColumnMappingModal = ({ isOpen, onClose, columns, onConfirm, fileInfo }) =
 
                         {/* Target Column Selection */}
                         <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label className="block text-sm font-medium text-text-primary">
                                 2. Which column is the **Target Value** to forecast?
                             </label>
                             <div className="relative">
                                 <select
                                     value={mappings.target}
                                     onChange={(e) => setMappings(prev => ({ ...prev, target: e.target.value }))}
-                                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg appearance-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all font-mono text-sm"
+                                    className="w-full p-3 bg-bg-tertiary border border-border-primary rounded-lg appearance-none focus:ring-2 focus:ring-secondary-500 focus:border-transparent transition-all font-mono text-sm text-text-primary"
                                 >
                                     <option value="" disabled>Select Value Column...</option>
                                     {columns.map(col => (
                                         <option key={col} value={col}>{col}</option>
                                     ))}
                                 </select>
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-tertiary">
                                     <ArrowRight className="w-4 h-4 rotate-90" />
                                 </div>
                             </div>
-                            <p className="text-xs text-gray-500 flex items-center gap-1">
+                            <p className="text-xs text-text-tertiary flex items-center gap-1">
                                 <AlertCircle className="w-3 h-3" />
                                 E.g. Sales, Demand, Price, Quantity.
                             </p>
@@ -132,10 +132,10 @@ const ColumnMappingModal = ({ isOpen, onClose, columns, onConfirm, fileInfo }) =
                     </div>
 
                     {/* Footer */}
-                    <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+                    <div className="p-6 border-t border-border-primary bg-bg-tertiary flex justify-end gap-3">
                         <button
                             onClick={onClose}
-                            className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
+                            className="px-4 py-2 text-text-secondary hover:bg-bg-secondary rounded-lg transition-colors font-medium"
                         >
                             Cancel
                         </button>
@@ -143,8 +143,8 @@ const ColumnMappingModal = ({ isOpen, onClose, columns, onConfirm, fileInfo }) =
                             onClick={handleSubmit}
                             disabled={!mappings.date || !mappings.target}
                             className={`px-6 py-2 rounded-lg font-medium flex items-center gap-2 shadow-lg transition-all ${mappings.date && mappings.target
-                                ? 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-105'
-                                : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+                                ? 'bg-brand-600 hover:bg-brand-700 text-white hover:scale-105'
+                                : 'bg-bg-secondary border border-border-primary text-text-disabled cursor-not-allowed'
                                 }`}
                         >
                             <Check className="w-4 h-4" />

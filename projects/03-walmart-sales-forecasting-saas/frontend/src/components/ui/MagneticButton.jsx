@@ -1,40 +1,52 @@
-import React, { useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef, useEffect } from 'react';
+import { gsap } from 'gsap';
 
-const MagneticButton = ({ children, className = '', onClick, type = 'button', ...props }) => {
-    const ref = useRef(null);
-    const [position, setPosition] = useState({ x: 0, y: 0 });
+const MagneticButton = ({ children, className = '', ...props }) => {
+    const buttonRef = useRef(null);
 
-    const handleMouseMove = (e) => {
-        const { clientX, clientY } = e;
-        const { left, top, width, height } = ref.current.getBoundingClientRect();
+    useEffect(() => {
+        const button = buttonRef.current;
+        if (!button) return;
 
-        const x = clientX - (left + width / 2);
-        const y = clientY - (top + height / 2);
+        const handleMouseMove = (e) => {
+            const rect = button.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
 
-        // Magnetic pull factor (0.3 = subtle, 1 = follows cursor exactly)
-        setPosition({ x: x * 0.3, y: y * 0.3 });
-    };
+            gsap.to(button, {
+                x: x * 0.2, // Magnetic strength
+                y: y * 0.2,
+                duration: 0.3,
+                ease: 'power2.out'
+            });
+        };
 
-    const handleMouseLeave = () => {
-        setPosition({ x: 0, y: 0 });
-    };
+        const handleMouseLeave = () => {
+            gsap.to(button, {
+                x: 0,
+                y: 0,
+                duration: 0.5,
+                ease: 'elastic.out(1, 0.3)'
+            });
+        };
+
+        button.addEventListener('mousemove', handleMouseMove);
+        button.addEventListener('mouseleave', handleMouseLeave);
+
+        return () => {
+            button.removeEventListener('mousemove', handleMouseMove);
+            button.removeEventListener('mouseleave', handleMouseLeave);
+        };
+    }, []);
 
     return (
-        <motion.button
-            ref={ref}
-            type={type}
-            className={`relative overflow-hidden ${className}`}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            animate={{ x: position.x, y: position.y }}
-            transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
-            onClick={onClick}
+        <div
+            ref={buttonRef}
+            className={`magnetic-btn inline-block ${className}`}
             {...props}
         >
-            {/* Ripple effect container could go here if needed */}
-            <span className="relative z-10">{children}</span>
-        </motion.button>
+            {children}
+        </div>
     );
 };
 

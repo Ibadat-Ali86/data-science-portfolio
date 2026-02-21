@@ -25,7 +25,7 @@ export const FlowProvider = ({ children }) => {
 
     // Flow state
     const [flowState, setFlowState] = useState(() => {
-        const saved = localStorage.getItem('forecastai_flow');
+        const saved = sessionStorage.getItem('forecastai_flow');
         return saved ? JSON.parse(saved) : {
             completedSteps: [],
             currentStep: 'dashboard',
@@ -39,7 +39,7 @@ export const FlowProvider = ({ children }) => {
 
     // Persist flow state
     useEffect(() => {
-        localStorage.setItem('forecastai_flow', JSON.stringify(flowState));
+        sessionStorage.setItem('forecastai_flow', JSON.stringify(flowState));
     }, [flowState]);
 
     // Update current step based on location
@@ -192,18 +192,18 @@ export const FlowProgressBar = ({ className = '' }) => {
                     <div
                         key={step.id}
                         className={`flex flex-col items-center ${completedSteps.includes(step.id)
-                                ? 'text-emerald-500'
-                                : currentStep === step.id
-                                    ? 'text-purple-500'
-                                    : 'text-gray-400 dark:text-slate-500'
+                            ? 'text-emerald-500'
+                            : currentStep === step.id
+                                ? 'text-purple-500'
+                                : 'text-gray-400 dark:text-slate-500'
                             }`}
                         title={step.label}
                     >
                         <div className={`w-3 h-3 rounded-full ${completedSteps.includes(step.id)
-                                ? 'bg-emerald-500'
-                                : currentStep === step.id
-                                    ? 'bg-purple-500 ring-4 ring-purple-500/20'
-                                    : 'bg-gray-300 dark:bg-slate-600'
+                            ? 'bg-emerald-500'
+                            : currentStep === step.id
+                                ? 'bg-purple-500 ring-4 ring-purple-500/20'
+                                : 'bg-gray-300 dark:bg-slate-600'
                             }`} />
                     </div>
                 ))}

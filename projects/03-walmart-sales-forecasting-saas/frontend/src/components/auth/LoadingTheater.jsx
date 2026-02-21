@@ -23,16 +23,16 @@ const LoadingTheater = ({ show, stage = 'loading' }) => {
                                     {[0, 1, 2, 3].map((i) => (
                                         <div
                                             key={i}
-                                            className="absolute inset-2 border-4 border-primary-500 rounded-full animate-spin"
+                                            className="absolute inset-2 border-4 border-brand-500 rounded-full animate-spin"
                                             style={{
-                                                borderColor: '#3B82F6 transparent transparent transparent',
+                                                borderColor: '#6366F1 transparent transparent transparent',
                                                 animationDelay: `${-0.15 * i}s`,
                                                 animationDuration: '1.2s'
                                             }}
                                         />
                                     ))}
                                 </div>
-                                <p className="mt-4 text-slate-600 font-medium">Authenticating...</p>
+                                <p className="mt-4 text-text-secondary font-medium">Authenticating...</p>
                             </>
                         )}
 
@@ -64,8 +64,8 @@ const LoadingTheater = ({ show, stage = 'loading' }) => {
                                         transition={{ duration: 0.4, delay: 0.3 }}
                                     />
                                 </svg>
-                                <p className="mt-4 text-green-600 font-semibold text-lg">Success!</p>
-                                <p className="text-slate-500 text-sm">Redirecting to dashboard...</p>
+                                <p className="mt-4 text-success-600 font-semibold text-lg">Success!</p>
+                                <p className="text-text-tertiary text-sm">Redirecting to dashboard...</p>
                             </motion.div>
                         )}
                     </div>

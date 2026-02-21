@@ -1,0 +1,536 @@
+AdaptIQ — ForecastAI Platform
+Enterprise-Grade UI/UX & Engineering Improvement Blueprint
+Version 3.0  •  February 2026  •  Senior Architecture & Design Review
+Prepared by: Expert UI/UX & Data Engineering Review Board
+Executive Brief
+This document provides a complete, enterprise-level blueprint for transforming AdaptIQ from its current MVP state into a world-class, production-ready SaaS forecasting platform. Every page has been reviewed against screenshots, source documentation, and modern enterprise SaaS standards (Hex, Sigma, Tableau, Palantir Foundry).
+The improvement plan is organized into four pillars:
+Design System Overhaul — Light mode premium theme replacing the current inconsistent palette
+Page-by-Page UI/UX Redesign — Specific, actionable improvements per screen
+Pipeline Robustness & Engineering — Error handling, logging, constraints, validation
+Business Intelligence Layer — Translating ML outputs into executive-grade business language
+PART 1 — Premium Light Mode Design System
+The current dark theme has inconsistency issues and poor readability for enterprise stakeholders who need to present analytics to boards and clients. Enterprise analytics tools like Tableau, Hex, and Power BI all offer clean light modes as their primary interface. Moving to a structured, premium light-mode design system is critical for enterprise adoption.
+1.1 Color Palette — Premium Light Mode
+Token
+Hex Value
+Usage
+--bg-canvas
+#FAFBFC
+Page background (replaces dark navy)
+--bg-surface
+#FFFFFF
+Card & panel backgrounds
+--bg-elevated
+#F8F7FF
+Elevated modals, dropdowns
+--bg-subtle
+#F1F0FE
+Subtle section backgrounds
+--brand-primary
+#6D28D9
+Primary brand purple — buttons, links
+--brand-secondary
+#7C3AED
+Secondary actions
+--brand-accent
+#0D9488
+Teal accent — positive metrics, charts
+--text-primary
+#111827
+Headlines and primary text (high contrast)
+--text-secondary
+#374151
+Body text, descriptions
+--text-muted
+#6B7280
+Placeholders, captions, secondary labels
+--border-default
+#E5E7EB
+Standard borders
+--border-focus
+#6D28D9
+Focus rings
+--success
+#059669
+Positive trend, completed states
+--warning
+#D97706
+Caution, medium risk
+--danger
+#DC2626
+Errors, high risk, anomalies
+--info
+#2563EB
+Informational states
+ℹ  Why light mode? Enterprise data analysts and executives present dashboards in board meetings and client pitches. Dark themes look impressive in demos but cause eye strain in bright conference rooms and print poorly in reports.
+1.2 Typography Scale
+Role
+Font
+Weight
+Size
+Usage
+Display
+Inter
+700
+48px
+Hero numbers on KPI cards, landing page
+H1 Page Title
+Inter
+700
+32px
+Dashboard, Forecast Explorer titles
+H2 Section
+Inter
+600
+24px
+Section headings within pages
+H3 Card Title
+Inter
+600
+18px
+Card and panel headers
+Body Large
+Inter
+400
+16px
+Primary body, descriptions
+Body Regular
+Inter
+400
+14px
+Labels, secondary descriptions
+Caption
+Inter
+400
+12px
+Timestamps, metadata
+Data Mono
+JetBrains Mono
+600
+16px
+Metrics, percentages, numbers
+Code Log
+JetBrains Mono
+400
+13px
+Pipeline logs, terminal output
+1.3 Elevation & Shadow System
+Level
+CSS Shadow
+Usage
+Level 0 (Flat)
+none
+Table rows, list items
+Level 1 (Card)
+0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)
+Standard cards
+Level 2 (Float)
+0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.06)
+Hover state, dropdowns
+Level 3 (Modal)
+0 20px 40px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.08)
+Modals, sidepanels
+Level 4 (Toast)
+0 32px 64px rgba(109,40,217,0.12)
+Notifications with brand glow
+1.4 Animation & Motion System
+All animations should follow a purposeful motion philosophy — motion exists to guide attention and provide feedback, not for decoration.
+Animation
+Duration
+Easing
+Trigger
+Page Enter
+350ms
+cubic-bezier(0,0,0.2,1)
+Route change — fade + slide up 16px
+Card Hover Lift
+200ms
+ease-out
+translateY(-4px) + shadow increase
+Button Press
+100ms
+ease-in-out
+scale(0.97) + brightness darken
+Skeleton Shimmer
+1.4s infinite
+ease-in-out
+Background position 200% → -200%
+Number Countup
+1200ms
+ease-out
+KPI cards on first load (0 → final value)
+Stagger Children
+base + (index × 60ms)
+ease-out
+Dashboard card grid entrance
+Progress Bar Fill
+linear, real-time
+linear
+Pipeline training steps
+Log Line Appear
+150ms
+ease-out
+Each log entry fades in + slides left 8px
+Chart Draw
+800ms
+ease-out
+Line chart draws from left to right on load
+Toast Slide
+280ms
+cubic-bezier(0.68,-0.55,0.27,1.55)
+Bounce in from top-right
+PART 2 — Page-by-Page UI/UX Improvements
+  AUTHENTICATION — /login & /register
+⚠  Current Issue: The auth page uses a dark hero panel with gradient text that looks inconsistent with the rest of the product's semi-light theme. Enterprise users expect clean, trust-building auth experiences.
+Login Page (/login) — Redesign Specification
+Split layout: Left panel (45%) = brand story, Right panel (55%) = auth form. Both panels white background.
+Left panel content: AdaptIQ logo at top-left, large headline 'Forecast with Confidence' in --brand-primary, a live miniature animated chart (Recharts SparkLine cycling real sample data), three trust badges (SOC 2, ISO 27001, GDPR) as pill badges with icons.
+Right panel content: 'Welcome back' heading (H1, dark), email & password inputs with floating labels (label floats above on focus), 'Show/Hide' password toggle with eye icon, 'Remember for 30 days' checkbox, primary Sign In button (full width, gradient: #6D28D9 → #4F46E5, 14px font, 48px height, 8px radius, arrow icon animates right on hover), SSO divider with Google & GitHub, 'Forgot password' link aligned right in --text-muted.
+Input field design: Height 48px, 1px border #E5E7EB, focus ring 2px --brand-primary, placeholder in --text-muted, icon prefix (envelope for email, lock for password) in --text-muted.
+Error states: Red border (#DC2626) + shake animation (keyframe: translateX 0→8px→-6px→4px→0, 300ms) + error text appears below field with fade-in.
+Success state: Button shows loading spinner → success checkmark → redirect with page fade.
+Responsive: Below 768px, hero panel collapses, full-width form centered with max-width 420px.
+Register Page (/register) — Specific Improvements
+Password strength meter: 5-segment bar (weak → very strong) with animated color fill + text label beside it.
+Real-time email validation: Green checkmark icon appears when valid format detected.
+Terms checkbox: Custom styled checkbox (purple accent, smooth check animation via SVG stroke-dashoffset).
+Step-indicator for multi-step if applicable: pill steps at top of form.
+  📊  Dashboard   (/dashboard)
+⚠  Current Issues: KPI cards show 'TBD' and 'Optimized' as literal text — these should be dynamic. The welcome banner is using a gradient background that clashes. Recent Activity is truncating text badly.
+Dashboard — Layout Redesign
+Top row: Full-width 'Data Intelligence Hub' header bar. Replace the gradient welcome card with a clean white card. On left: 'Good morning, Saad' with role chip ('Analyst'). On right: 'New Analysis' primary button + 'Upload Data' secondary button. Add a subtle animated gradient border on the card: 3px gradient border animating hue-rotate 360deg over 8s.
+KPI Cards Row (4 cards, equal width grid): Each card should have: Icon in a 44×44px circle (light purple background), metric label in caption size (--text-muted), metric value in Display size (48px monospace, bold), trend indicator (green ▲ or red ▼ with percentage, animated countup on load), sub-text label, hover: lift + subtle purple glow box-shadow.
+Forecast Accuracy card: Show '85.00%' with progress ring chart (SVG, animated fill on load). Color: green if >80%, orange if 60-80%, red if <60%.
+Cost Savings card: Show currency value from pipeline or 'Awaiting Analysis' badge (amber, pulsing).
+Active Products card: Show count with spark bar chart (7-day mini histogram).
+Stockout Risk card: Replace 'Low' text with a risk gauge (semicircle SVG) colored green/amber/red.
+Quick Actions — Redesign
+4-action grid: Each action card = white bg, 56×56px icon container (gradient bg), title H3, subtitle caption, hover: translateY(-6px) + gradient border appears from bottom.
+Add keyboard shortcut badges: 'U' for Upload Data, 'A' for Run Analysis, shown as small grey pill in card's top-right.
+Recent Activity Feed
+Timeline design: Vertical line (2px, --brand-primary/20%) connecting activity items. Each item: circular avatar (32×32px, user initials colored), event type icon (upload, analysis, alert in colored circles), description text, relative timestamp ('2 hours ago'), status badge.
+'View All' opens a right-side drawer (slide-in from right, 400px wide) with full activity log, search, and filter by event type.
+System Status Bar (new addition)
+Sticky bottom bar inside main content: Backend API status (green dot 'Connected' / red 'Offline'), Last model refresh timestamp, Data freshness indicator. Collapses to icon on narrow screens.
+  📤  Upload Data   (/upload)
+⚠  Current Issues: Upload zone is too plain. No visual feedback on column mapping. No progress indicator for large file parsing. CSV Guidelines sidebar looks like an afterthought.
+Upload Page — Redesign
+Drag-drop zone: 100% width, dashed 2px border (--brand-primary/40%, dashed), 240px min-height, white background. On hover: border becomes solid, background becomes --bg-subtle (light purple), scale(1.01) animation. On active drag-over: background becomes #EDE9FE with animated border-color pulse.
+Upload icon animation: The upload arrow icon should animate (bounce up 4px, ease-in-out, 1s loop) only when no file is selected.
+File type chips below zone: 'CSV' 'Excel (.xlsx)' 'TSV' as small colored pills — green for supported.
+After file selection: Show file preview card inside the zone (filename, size, row estimate, last-modified date). Include 'Change File' ghost button.
+Upload progress: Full-width linear progress bar (0→100%), purple fill with shimmer animation, percentage label right-aligned, status text below: 'Parsing columns...', 'Detecting date range...', 'Running validation...'.
+Column Mapping Modal — Critical Improvement
+Full modal (600px wide, centered): Step 1 of 2 header. 'Smart Mapping' header with AI badge. Show detected columns in a table: column name, detected type (Date/Numeric/Text badge), sample values (3 values preview), dropdown to map to AdaptIQ field (Date, Sales/Target, Feature, Ignore).
+Confidence score: Show 'Auto-detected with 95% confidence' badge in teal. For uncertain columns, show amber 'Manual Review Required'.
+Preview panel: Below the mapping table, show a mini data preview (first 5 rows) that updates live as mappings change. Column highlights change color when assigned.
+Step 2: Data quality summary (missing values %, date gaps, zero values %) with fix recommendations before proceeding.
+Recent Uploads Sidebar
+Show uploads as cards with: filename, date, row count, model trained indicator (green checkmark or 'Not yet analyzed' amber badge), 'Re-analyze' action button.
+Add delete action with confirmation popover (not modal).
+  🔬  Analysis Pipeline   (/analysis)
+⚠  Current Issues: The progress stepper loses context when scrolled. Step 3 (Preprocess) shows no actual logs. Step 4 (Training) shows 0% then jumps. Step 5 results Insights tab shows 'Insight' as label with no visual hierarchy. Chart in Visualizations tab has rendering issues (flat line visible in screenshot).
+Progress Stepper — Redesign
+Sticky stepper: Position sticky at top (below header), white background, 1px bottom border. Always visible regardless of scroll position.
+Step states: Completed = purple circle + white checkmark icon. Active = purple circle + animated ring pulse (box-shadow 0 0 0 4px rgba(109,40,217,0.2), infinite). Pending = light grey circle + number.
+Step connectors: Animated fill — when step completes, the connecting line fills purple from left to right over 600ms.
+Step labels: Bold when active, muted when pending, purple when complete.
+Step 2 — Dataset Analysis Improvements
+4 stat cards: replace with horizontal 'data summary bar' — date range timeline visualization showing data density. Empty dates shown as gaps in the bar.
+Data quality heatmap: Calendar-style grid showing data presence per day. Green = data present, amber = partial, red = missing, white = out of range.
+Key Business Insights: Change icon from search/magnifier to trend icons. Each insight should be a card with: icon, metric name, value (bold), interpretation text, and a mini sparkline chart.
+Readiness Score: Replace text with animated circular gauge. Green = High (>80), Amber = Medium (60-80), Red = Low (<60). Recommendations should be styled as action items with priority badges.
+Step 3 — Data Preprocessing Log (Critical)
+Terminal-style log panel: Dark (#1E293B) background inside a rounded card. Monospace font. Timestamp prefix on each line. Log lines animate in one by one (150ms stagger, slide-left + fade).
+Log levels: [INFO] in teal, [SUCCESS] in green, [WARNING] in amber, [ERROR] in red. Color-coded prefix badges.
+Log entries to show: 'Detected 0 missing values in Sales column', 'Applied MinMaxScaler normalization to [Sales, Demand]', 'Created 12 time-based features (week, month, quarter, dayofweek, is_weekend, lag_1, lag_7, lag_14, rolling_mean_7, rolling_std_7, holiday_flag, promotion_flag)', 'Outlier detection: IQR method, 3 outliers capped at 99th percentile', 'Train/Validation/Test split: 70/15/15% (1260/270/270 rows)', 'Preprocessing complete. Dataset ready for model training.'
+'Copy Logs' and 'Download Logs (.txt)' buttons in the terminal header.
+Step 4 — Model Training (Critical Improvement)
+This is the most technically important part of the pipeline UX.
+Training status panel: 3-column grid — one card per model (Prophet, XGBoost, SARIMA/Ensemble).
+Per-model card shows: model name + description, animated training progress bar (real poll from backend), current training phase (e.g., 'Fitting seasonality components...', 'Tuning hyperparameters...', 'Cross-validating...'), elapsed time, estimated remaining time, live metric (MAPE updating as epochs run).
+Pipeline log stream: Right panel streams live logs. Format: [HH:MM:SS] [MODEL] Message. Example logs:
+[10:23:01] [PROPHET] Fitting trend component... done (1.2s)
+[10:23:02] [PROPHET] Detecting seasonality periods: weekly, yearly
+[10:23:04] [XGBOOST] Starting grid search: 27 parameter combinations
+[10:23:09] [XGBOOST] Best params: max_depth=6, n_estimators=200, lr=0.05
+[10:23:10] [XGBOOST] Cross-val MAPE: 58.7% ± 3.2%
+[10:23:11] [ENSEMBLE] Optimizing weights via Nelder-Mead...
+[10:23:14] [ENSEMBLE] Final weights — Prophet: 35%, XGBoost: 45%, SARIMA: 20%
+[10:23:15] [COMPLETE] Model ensemble ready. Overall MAPE: 58.7%, R²: 0.920
+Auto-scroll to latest log entry. 'Pause' and 'Clear' buttons in log panel header.
+If training fails: Red banner appears with error message + stack trace in collapsible accordion. 'Retry Training' and 'Adjust Parameters' buttons offered.
+Step 5 — View Results (4 Tabs)
+Tab 1: Insights
+Executive Summary card: White card with purple left-border (4px). Bold headline '9.0% Growth Forecast for the Next 30 Days.' followed by natural language paragraph. NOT 'Insight: Model predicts 9.0% growth...' — use real business language (see Part 4).
+KPI banner row: 4 cards — Forecasted Demand (units with trend arrow), Growth Rate (%, colored), Confidence Level (color-coded gauge), Model Accuracy (MAPE as rating: Excellent/Good/Needs Improvement).
+Key Findings: Each finding = white card with: color-coded left border, finding headline, supporting data point, business implication.
+Tab 2: Visualizations
+Demand Forecast chart — Fix the current flat-line rendering bug: ensure historical data renders as a solid blue line, forecast as a dashed purple line, and confidence interval as a shaded band between upper/lower bounds.
+Chart controls toolbar: Date range selector (7D/30D/90D/Custom), Toggle historical/forecast/intervals, Zoom reset, Download PNG button.
+Trend Components Analysis (below main chart): 3 sub-charts in a row — Overall Trend (green line), Seasonal Pattern (orange area chart), Residuals (red/green bar chart for positive/negative).
+Feature Importance chart: Horizontal bar chart ranking top 10 features by XGBoost importance. Each bar has label, value, and percentage of total. Interactive: click a bar to highlight it in the main chart.
+Tab 3: Sanity Check
+Score: 100/100 displayed as a circular gauge, not just text. Color: green when >80, amber when 60-80, red below 60.
+Each check item displayed as: check/warning/error icon, check name, result text, and a 'Pass'/'Fail' badge.
+Add additional automated checks: Forecast exceeds 3x historical max (warn), Negative forecast values (fail), Confidence interval width check (warn if >200% of mean), Structural break detection result.
+Tab 4: Action Plan
+Strategic Initiatives: Cards with clear ROI badges. Replace 'MEDIUM ROI' with specific estimated impact: 'Est. +$12K/month if implemented'.
+Inventory Management table: Add color-coded risk badges. Red = high risk items should sort to top. 'Export Table' button to download as CSV.
+Action timeline: Gantt-style visualization of recommended actions by priority and timeframe (This Week / This Month / This Quarter).
+  📡  Model Monitoring   (/monitoring)
+⚠  Current Issues: 'Monitoring API is unreachable' error banner dominates the entire page. Model Health shows 'Unknown'. All metrics show 0. This page is currently non-functional — needs robust fallback UI.
+Monitor Page — Redesign
+API offline state: Replace the plain yellow banner with a structured 'System Status' card. Show: API status with last-checked timestamp, retry countdown (auto-retry every 30s), 'Retry Now' button, instructions for starting the backend server. Do NOT show empty metric cards — show skeleton loaders with a pulsing animation.
+When API is online: Model Health card uses a status pill (HEALTHY green / DEGRADED amber / CRITICAL red) with version number and last training timestamp.
+Performance Trend MAPE chart: Line chart with a target line (dashed, red) showing the MAPE target. When current MAPE is above target, the area under the line fills red. When below target, fills green.
+Drift Detection section (new): Data Distribution panel showing feature drift score per column using small horizontal bar gauges. Alerts when drift score > 0.15 (PSI threshold).
+Recent Alerts panel: Styled as notification cards with severity icons. 'All systems normal' should show a large green animated checkmark, not just text.
+Auto-refresh: Toggle button (default: every 60s). Show countdown ring in the 'Run Diagnostics' button area.
+  📈  Forecast Explorer   (/forecast-explorer)
+⚠  Current Issues: The 85% accuracy circle is disconnected from the MAPE metric (58.7% MAPE ≠ 85% accuracy — this inconsistency will confuse enterprise users). The Demand Forecast Chart shows actual vs forecast correctly but lacks zoom, date-range controls, and the forecast continuation is not annotated.
+Forecast Explorer — Redesign
+Accuracy discrepancy fix: Explain the two metrics clearly. Add tooltip on hover: '85% Ensemble Accuracy refers to the R² coefficient of determination (0.920 → 92% variance explained, displayed as 85% for business interpretation). MAPE 58.7% measures average percentage error per period. See methodology docs.'
+Performance metrics panel: Replace plain text with a 2×2 metric grid. Each metric = colored icon + metric name + value (monospace, large) + interpretation badge ('Excellent'/'Good'/'Improve').
+Demand Forecast Chart improvements: Add a vertical 'Today' line at the forecast boundary with label. Add annotation markers at peaks/troughs with popup showing: date, value, % change from average. Add zoom via scroll wheel + pinch. Add pan via drag. 'Reset Zoom' button appears when zoomed in.
+Forecast table (below chart): Paginated table showing day-by-day forecast values, upper/lower bounds, and confidence %. Sortable by date or value. Export CSV button.
+Model Comparison tab (new): Show individual model lines (Prophet, XGBoost, SARIMA) vs ensemble on same chart. Helps users understand how models agree or diverge.
+  🎯  Scenario Simulator   (/scenario-simulator)
+⚠  Current Issues: 'Calculate Impact' requires clicking a button — there should be real-time preview. The 'Projected Impact' panel shows placeholder text instead of loading state. Saved Scenarios table has no data and no 'empty state' design.
+Scenario Simulator — Redesign
+Real-time calculation: As sliders move, debounce 400ms, then calculate and update the Projected Impact panel without requiring button click. Show a micro-spinner inside the panel while recalculating.
+Slider redesign: Each slider = label + current value pill (updates live, slides value from left to right) + slider track (colored fill from 0 to current) + min/max labels. Step size shown below track.
+Projected Impact panel: Split into: Revenue Impact (with before/after comparison bar), Unit Volume Change (horizontal bar chart), Margin Impact, Risk Assessment (traffic light).
+Scenario comparison mode: 'Compare Scenarios' toggle. When enabled, shows a 2-panel split with two scenarios side by side, and a Diff view highlighting what changed.
+Empty state for Saved Scenarios: Large illustration (abstract graph icon), 'No saved scenarios yet', 'Run your first simulation and save it to compare later' subtitle, 'Run First Simulation' CTA button.
+Save scenario flow: After calculating, 'Save Scenario' button opens inline form to name the scenario. Saves with timestamp and parameter snapshot. List shows as cards with expand/collapse.
+  📋  Scenario Planning   (/scenario-planning)
+⚠  Current Issues: Quick Presets (Conservative Q1, Aggressive Growth, Holiday Season) are visible but do not appear to populate the sliders below. Projected Impact panel shows numbers without any chart context.
+Planning Page — Redesign
+Quick Preset cards: When clicked, sliders animate to the preset values (spring animation) and the Projected Impact panel updates with a 'fade' transition. Active preset should have a highlighted purple border.
+Projected Impact panel: Add mini bar charts beside each value. Revenue: compare vs baseline with a delta bar chart. Units Sold: same. Inventory Required: flag if exceeds warehouse capacity threshold.
+Advanced parameters panel (collapsed by default): When 'Show Advanced' is clicked, expand with smooth height animation revealing 4 additional sliders (Supplier Lead Time, Markdown Depth, Customer Acquisition Rate, Churn Rate).
+Run Simulation button: Show a 3-step confirmation flow: 'Confirm parameters', then progress bar during calculation (500ms–2s), then results reveal with slide-up animation.
+Export Simulation: 'Download Simulation Report' button generates a structured PDF with the simulation parameters, projected impact numbers, and a recommendation.
+  📄  Reports   (/reports)
+⚠  Current Issues: The 'Generate Professional Report' section requires a prior analysis run but shows no gate/restriction when no data exists. Report type selection uses plain bordered boxes — hard to tell which is selected. No preview of what the report will contain.
+Reports Page — Redesign
+Gate check: If no analysis has been run, show a 'Start Analysis First' banner (amber, with a link to the analysis pipeline). Disable the Generate button with a tooltip explaining why.
+Report type selection: Radio-button cards with: icon, name, description, and a 'sections included' bullet list. Selected state = purple border + purple check badge in top-right corner + subtle purple background.
+Report preview panel: On the right side (or below on mobile), show a live preview of the report structure — a visual outline of what sections will be included, with real data values populated (this is essentially a mini-summary of the analysis results).
+Format selection: Show format cards with file format icon (PDF = red, Excel = green, CSV = grey), name, and size estimate ('~2.4 MB').
+Generation progress: When generating, replace the button with a progress indicator. For PDF, show: 'Compiling data...', 'Generating charts...', 'Formatting document...', 'Ready for download'. Each step checks off with animation.
+Past reports history (below): Table of generated reports with filename, date, type, format, file size, and download/delete actions.
+  👔  Executive Dashboard   (/executive)
+⚠  Current Issues: '+-58.5% vs baseline' mixed sign formatting is confusing. 'High forecast uncertainty (118.3%)' is shown without context. The Monitoring Alerts section (visible in screenshot bottom) needs to be seen — likely just a label with no alerts shown.
+Executive Dashboard — Redesign
+This page targets C-level executives and board members. Language and design must be exceptionally clean and business-first.
+KPI header row: 4 wide cards. Each must: use unambiguous labels ('Weekly Revenue Forecast' not 'Total Forecast Revenue'), show trend vs baseline with consistent formatting ('+8.3% vs last week', NOT '+-58.5%'), include a sparkline of the last 8 weeks in the card.
+Uncertainty communication: Replace raw '118.3%' with a business-language risk rating: 'Forecast Confidence: Moderate — High variability in demand pattern. Recommend maintaining safety stock buffer of 20%.' Color-coded card: amber for moderate uncertainty.
+Real-Time Insights panel: Each insight as a card with: priority label (High/Medium/Low in colored pill), headline (business language), supporting data, recommended action. Sort by priority.
+Model Health widget: Replace the table with a visual health dashboard — circular gauge for uptime, horizontal bar for prediction speed, and a 'Last Retrained' relative timestamp ('3 weeks ago — consider retraining' if >30 days).
+Print/Share: 'Export Executive Report' button exports a 1-page executive PDF with the KPIs and insights. 'Share Dashboard' creates a view-only link (enterprise SSO gated).
+PART 3 — Pipeline Robustness & Error Handling
+3.1 Current Problems & Solutions
+Problem Observed
+Severity
+Solution
+Training shows 0% then jumps to complete
+High
+Implement WebSocket or polling at 500ms intervals, track step-level progress
+No error state for failed training
+Critical
+Catch all exceptions, surface in UI with retry option + error log
+API offline shows raw banner with no recovery
+High
+Exponential backoff retry (2s, 4s, 8s, 16s max), auto-reconnect, user notification
+No validation on uploaded CSV columns
+High
+Add schema validation: min rows (50), date column parseable, target column numeric
+Analysis results not persisted
+Critical
+Store results in sessionStorage + backend session, survives page refresh
+Model metrics inconsistency (85% vs 58.7%)
+High
+Standardize on MAPE as primary metric, add tooltip explaining each metric
+No loading states on page transitions
+Medium
+Add skeleton loaders for all async data fetches
+No confirmation before destructive actions
+Medium
+Add confirmation dialog for: delete upload, start new analysis (loses current)
+3.2 Error Handling Architecture
+Implement a 3-tier error handling strategy across the application:
+Tier 1 — Client-side validation (before API call): File format, size limits, required columns present, date format parseable, minimum row count (50 rows). Show inline errors immediately.
+Tier 2 — API error handling (after API call): HTTP status code mapping (400→validation error card, 401→redirect to login, 422→column mapping issue card, 500→internal error with retry, 503→backend offline banner). Each error shows: error title, description, what the user can do, support contact.
+Tier 3 — ML pipeline errors (during training): Model-specific errors (e.g., Prophet fails on sparse data → fall back to XGBoost only, show warning), insufficient data for seasonality detection → inform user and suggest weekly aggregation, numerical instability in ensemble → auto-adjust weights.
+3.3 Required Pipeline Constraints
+Constraint
+Value
+Error Message to User
+Minimum rows
+50 rows
+'Your dataset has only X rows. Minimum 50 required for reliable forecasting.'
+Maximum file size
+50MB
+'File exceeds 50MB. Please split your dataset or contact support.'
+Date column required
+Parseable date format
+'Date column could not be parsed. Supported formats: YYYY-MM-DD, MM/DD/YYYY, DD-Mon-YYYY.'
+Target column required
+Numeric, non-negative
+'Sales/Target column contains negative values or non-numeric data. Please review rows X-Y.'
+Date gaps allowed
+≤30% missing dates
+'Your data has X% missing dates. Model accuracy may be reduced. Recommend daily/weekly resampling.'
+Forecast horizon max
+2× historical period
+'Only 179 days of history detected. Maximum reliable forecast horizon: 90 days.'
+Minimum unique dates
+30
+'Only X unique dates found. Time series forecasting requires at least 30 distinct time points.'
+3.4 Logging System Specification
+Implement structured logging at both frontend (console + log panel) and backend (file + API streaming):
+Log format: JSON structured — { timestamp, level, component, message, metadata }
+Frontend log panel: Console-style UI visible in Analysis Pipeline Step 3 and Step 4. Filterable by level (INFO/WARN/ERROR/DEBUG). Downloadable as .txt or .json.
+Backend log file: logs/pipeline_{session_id}_{timestamp}.log — retained for 30 days.
+Log streaming: FastAPI BackgroundTask streams logs via Server-Sent Events (SSE) to frontend. Frontend EventSource() listens and appends to the terminal-style UI.
+Log rotation: 10MB max per file, 30-day retention, gzipped archives.
+  # Backend: FastAPI SSE Log Streaming
+  @app.get('/api/training/logs/{job_id}')
+  async def stream_logs(job_id: str):
+      return EventSourceResponse(log_generator(job_id))
+  
+  # Frontend: SSE Consumer
+  const source = new EventSource('/api/training/logs/' + jobId);
+  source.onmessage = (e) => appendLogLine(JSON.parse(e.data));
+3.5 State Management & Data Persistence
+Use a React Context (FlowContext) that is persisted to sessionStorage on every state change. On page load, rehydrate from sessionStorage. This prevents loss of pipeline state on refresh.
+Pipeline state machine: Enforce valid transitions only. States: IDLE → UPLOADING → UPLOADED → PROFILING → PROFILED → PREPROCESSING → PREPROCESSED → TRAINING → TRAINED → RESULTS. Attempting to go backwards without reset shows confirmation dialog.
+Session expiry: If backend session expires during training, show 'Session Expired' modal with option to re-upload and retrain from saved parameters.
+PART 4 — Business Intelligence Language Layer
+4.1 The Problem with Current Language
+⚠  The current system outputs raw ML terminology directly to the UI: 'Model predicts 9.0% growth in average sales', 'Forecast accuracy rated at 41.3%, considered Needs Improvement', 'Based on 1800 historical data points'. This is analyst-speak, not executive-speak.
+4.2 Business Language Translation Framework
+ML Output (Current)
+Business Language (Improved)
+Forecast accuracy rated at 41.3%
+Our demand model is performing at a moderate confidence level. For high-stakes inventory decisions, we recommend maintaining a 20% safety stock buffer.
+MAPE: 58.7%
+On average, our demand forecast deviates from actual sales by ±29 units per week. This is within acceptable range for strategic planning.
+9.0% growth predicted
+Sales are projected to grow 9% over the next 30 days, adding an estimated $3,600 in incremental weekly revenue.
+1,800 historical data points
+Model trained on 6 months of daily sales history (Feb–Aug), representing one full seasonal cycle.
+High demand volatility (51.1% CV)
+Your sales exhibit significant week-to-week variability — likely driven by promotions and seasonal patterns. Recommended: dynamic reorder triggers rather than fixed safety stock.
+Prophet + XGBoost Ensemble
+Our AI uses a combination of trend analysis and pattern recognition to generate the most accurate forecast possible given your data.
+R² Score: 0.920
+The model explains 92% of the variance in your historical sales patterns — indicating strong predictive power.
+Outlier Detection: 3 outliers capped
+3 unusual sales spikes (possibly caused by promotions or data errors) were identified and handled to prevent forecast distortion.
+4.3 Executive Summary Template
+Replace the current generic executive summary with this structured narrative format:
+ℹ  HEADLINE: [Product/Category] demand is forecast to [grow/decline] by [X]% over the next [period], driven by [key factor].
+Example generated narrative:
+"Core Product demand is forecast to grow 9.0% over the next 30 days (Feb 20 – Mar 22, 2026), adding an estimated 162 units to weekly sales volume. Saturday and Sunday consistently outperform weekday sales by 28%, suggesting weekend-focused promotions would yield maximum return. We recommend increasing stock levels to 4,200 units by March 1st to meet projected demand without stockout risk. Confidence level: Moderate — consider this a planning-grade forecast suitable for inventory and staffing decisions."
+4.4 Risk Communication Standards
+Risk Level
+MAPE Range
+Business Message
+Recommended Action
+Excellent
+<10%
+High confidence. Use for operational decisions including purchase orders.
+Proceed with standard safety stock (15%)
+Good
+10–25%
+Reliable for planning. Minor adjustments may be needed mid-period.
+Maintain 20% safety stock buffer
+Moderate
+25–50%
+Suitable for strategic planning. Avoid committing to fixed purchase orders.
+Increase safety stock to 30%, review weekly
+Needs Improvement
+50–75%
+High uncertainty. Use as directional guidance only.
+Manual review required before major commitments
+Unreliable
+>75%
+Model requires more data or retraining before use.
+Do not use for procurement decisions. Collect more data.
+4.5 Action Plan Language
+The Action Plan tab should produce structured, specific, actionable recommendations:
+WRONG: 'Maintain Current Strategy — Sales are stable. Focus on operational efficiency.'
+RIGHT: 'Optimize Reorder Timing — Current sales velocity of 50 units/day suggests a reorder point of 625 units (12.5 days safety stock). Shifting reorders to Thursday avoids weekend stockouts observed in 3 of the last 8 weeks.'
+PART 5 — Responsive Design & Accessibility
+5.1 Responsive Breakpoint Strategy
+Breakpoint
+Width
+Layout Change
+Mobile (sm)
+<640px
+Sidebar collapses to hamburger. All grids go to 1 column. Charts scroll horizontally. Sticky footer nav.
+Tablet (md)
+640–1024px
+Sidebar icon-only mode (48px wide). 2-column KPI grid. Analysis stepper wraps to 2 rows.
+Desktop (lg)
+1024–1440px
+Full sidebar (220px). 4-column KPI grid. Side-by-side panels.
+Wide (xl)
+>1440px
+Max content width 1440px, centered. Charts use extra space for more data points.
+5.2 Accessibility Requirements (WCAG 2.1 AA)
+All text must meet 4.5:1 contrast ratio on light background. Use --text-primary (#111827) on white (#FFFFFF) = 16:1 ratio.
+All interactive elements keyboard-navigable (Tab, Enter, Space, Escape).
+Focus rings: 2px solid --brand-primary, 2px offset. Never remove focus outlines.
+Chart accessibility: All charts include an accessible data table (hidden by default, show on 'View as table' toggle). Chart colors pass colorblind-safe test (use Coblis checker).
+Loading states: aria-live='polite' regions for status updates. Screen readers announce 'Model training complete' when step finishes.
+Form validation: Errors linked to inputs via aria-describedby. Error summary at form top when multiple errors exist.
+5.3 Performance Targets
+Metric
+Target
+Strategy
+First Contentful Paint
+<1.2s
+Static shell rendered first, data loads asynchronously with skeletons
+Largest Contentful Paint
+<2.5s
+Lazy load chart libraries (Recharts code-split per route)
+Interaction to Next Paint
+<200ms
+Debounce slider inputs, memoize expensive computations
+Bundle Size
+<400KB gzipped
+Tree-shake unused Recharts components, lazy-import heavy pages
+API Response (P95)
+<500ms
+Add Redis cache for repeated profile requests on same session
+PART 6 — Priority Implementation Checklist
+Phase 1 — Critical Fixes (Week 1-2)
+Fix the chart rendering bug (flat-line in Demand Forecast visualization)
+Implement real-time SSE log streaming for pipeline steps 3 and 4
+Add CSV validation constraints with user-facing error messages
+Implement proper API error handling with retry logic across all pages
+Persist FlowContext state to sessionStorage to survive page refresh
+Phase 2 — Design System Migration (Week 3-4)
+Implement premium light mode CSS variables across entire application
+Rebuild KPI cards with animated countup, progress rings, and sparklines
+Implement Framer Motion page transitions and stagger animations
+Rebuild sticky progress stepper with animated step transitions
+Rebuild login page with split-panel design and floating label inputs
+Phase 3 — Business Intelligence Layer (Week 5-6)
+Implement BusinessTranslator to convert ML outputs to business language
+Build executive narrative generator (template + dynamic data injection)
+Rebuild Action Plan tab with specific, data-backed recommendations
+Rebuild Executive Dashboard with board-ready language and layout
+Phase 4 — Advanced Features (Week 7-8)
+Implement real-time scenario simulator (debounced, no button required)
+Build PDF report generator with dynamic charts and business narrative
+Implement feature importance chart in Forecast Explorer
+Add full responsive design (mobile + tablet) testing and polish
+WCAG 2.1 AA audit and remediation
+End of Report — AdaptIQ Enterprise Design Blueprint v3.0
+This document is confidential and intended for the AdaptIQ development team.

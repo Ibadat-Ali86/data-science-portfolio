@@ -76,6 +76,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from starlette.middleware.sessions import SessionMiddleware
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info(f"👉 Request: {request.method} {request.url} | Origin: {request.headers.get('origin')}")
@@ -88,16 +91,45 @@ async def log_requests(request: Request, call_next):
         raise e
 
 # Include routers
-from app.api import auth, dashboard, sales, forecasts, analysis, monitoring, data_pipeline, oauth
+from app.api import auth, dashboard, sales, forecasts, analysis, monitoring, data_pipeline, oauth, error_handler
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(oauth.router, prefix="/api/auth", tags=["OAuth"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(sales.router, prefix="/api/sales", tags=["Sales Data"])
 app.include_router(forecasts.router, prefix="/api/forecasts", tags=["Forecasts"])
 app.include_router(analysis.router, prefix="/api/analysis", tags=["Analysis"])
-# app.include_router(monitoring.router, prefix="/api/monitoring", tags=["ML Monitoring"]) - Uncomment when module exists
 app.include_router(monitoring.router, prefix="/api/monitoring", tags=["ML Monitoring"])
 app.include_router(data_pipeline.router, tags=["Data Pipeline"])
+
+# WebSocket Endpoint
+from fastapi import WebSocket, WebSocketDisconnect
+from app.services.websocket_manager import manager
+
+@app.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    # Parse client_id to determine subscription type
+    # Format: "session:uuid" or "user:uuid"
+    session_id = None
+    user_id = None
+    
+    if client_id.startswith("session:"):
+        session_id = client_id.split(":")[1]
+    elif client_id.startswith("user:"):
+        user_id = client_id.split(":")[1]
+        
+    await manager.connect(websocket, session_id, user_id)
+    try:
+        while True:
+            # Keep connection alive and handle incoming messages (e.g. pings)
+            data = await websocket.receive_text()
+            # Optional: handle client messages
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, session_id, user_id)
+app.include_router(error_handler.router, tags=["Error Handling"])
+
+# Reports API
+from app.api import reports
+app.include_router(reports.router, prefix="/api/reports", tags=["Reporting"])
 
 # Mount static files (Frontend)
 # Try to find the static directory relative to the current file or working directory
@@ -146,6 +178,56 @@ async def health_check():
             "error": str(e),
             "version": settings.VERSION
         }
+
+@app.get("/api/health")
+async def health_check_alias():
+    return await health_check()
+
+@app.get("/api/health/detailed")
+async def detailed_health_check():
+    """Detailed health check with circuit breaker states and pipeline info"""
+    import psutil
+    import os
+    
+    health_data = {
+        "status": "operational",
+        "version": settings.VERSION,
+        "environment": settings.ENVIRONMENT,
+        "timestamp": __import__('datetime').datetime.utcnow().isoformat(),
+        "system": {}
+    }
+    
+    # System metrics
+    try:
+        health_data["system"] = {
+            "cpu_percent": psutil.cpu_percent(interval=0.1),
+            "memory_percent": psutil.virtual_memory().percent,
+            "disk_percent": psutil.disk_usage('/').percent
+        }
+    except Exception:
+        health_data["system"] = {"error": "psutil not available"}
+    
+    # Circuit breaker states
+    try:
+        from app.utils.circuit_breaker import ml_training_breaker, data_profiling_breaker, database_breaker
+        health_data["circuit_breakers"] = {
+            "ml_training": ml_training_breaker.get_status(),
+            "data_profiling": data_profiling_breaker.get_status(),
+            "database": database_breaker.get_status()
+        }
+    except Exception as e:
+        health_data["circuit_breakers"] = {"error": str(e)}
+    
+    # Active sessions count
+    try:
+        from app.api.analysis import training_jobs
+        health_data["active_sessions"] = len(training_jobs)
+    except Exception:
+        health_data["active_sessions"] = "unknown"
+    
+    return health_data
+
+
 
 if __name__ == "__main__":
     import uvicorn

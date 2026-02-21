@@ -65,21 +65,23 @@ const ActionableRecommendations = ({ forecastData, insights, onExport, analysisD
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                     <Megaphone className="w-5 h-5 text-purple-500" />
-                    Marketing Strategy Recommendations
+                    Strategic Initiatives
                 </h3>
 
-                <div className="space-y-4">
-                    {recommendations.marketing.map((strategy, idx) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {recommendations.strategies.map((strategy, idx) => (
                         <motion.div
                             key={idx}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: idx * 0.1 }}
-                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.15 }}
+                            className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         >
-                            <div className="flex items-start justify-between mb-3">
-                                <h4 className="font-semibold text-gray-900 dark:text-white">{strategy.name}</h4>
-                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${strategy.roi === 'High'
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
+                                    <Megaphone className="w-6 h-6" />
+                                </div>
+                                <span className={`text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wide ${strategy.roi === 'High'
                                     ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                                     : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                                     }`}>
@@ -87,27 +89,28 @@ const ActionableRecommendations = ({ forecastData, insights, onExport, analysisD
                                 </span>
                             </div>
 
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                            <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{strategy.name}</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
                                 {strategy.description}
                             </p>
 
-                            <div className="flex flex-wrap gap-2 mb-3">
-                                <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                <span className="text-xs px-2 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded">
                                     Budget: {strategy.budget}
                                 </span>
                                 {strategy.channels.map((channel, i) => (
-                                    <span key={i} className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
+                                    <span key={i} className="text-xs px-2 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded">
                                         {channel}
                                     </span>
                                 ))}
                             </div>
 
-                            <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
-                                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Tactics:</p>
-                                <ul className="space-y-1">
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Key Tactics</p>
+                                <ul className="space-y-2">
                                     {strategy.tactics.slice(0, 3).map((tactic, i) => (
                                         <li key={i} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
-                                            <ArrowRight className="w-3 h-3 flex-shrink-0 mt-1 text-purple-500" />
+                                            <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-green-500" />
                                             {tactic}
                                         </li>
                                     ))}
@@ -404,58 +407,84 @@ const ExportSection = ({ analysisData }) => {
 /**
  * Generate recommendations from data
  */
-const generateRecommendations = (forecastData, insights) => {
+const generateRecommendations = (forecastData, metrics) => {
+    const bi = metrics?.insights || metrics?.business_insights;
+
+    // Calculate dynamic inventory based on actual forecast data
+    let dynamicInventory = [];
+    if (forecastData?.predictions?.length > 0) {
+        // Aggregate next 7 days (or first 25% of forecast horizon)
+        const horizon = Math.min(7, forecastData.predictions.length);
+        let recommendedStock = 0;
+        let upperBoundSum = 0;
+
+        for (let i = 0; i < horizon; i++) {
+            recommendedStock += forecastData.predictions[i];
+            upperBoundSum += (forecastData.upper_bound?.[i] || forecastData.predictions[i] * 1.15);
+        }
+
+        // Safety stock is the difference between upper bound and prediction 
+        const safetyStock = Math.max((upperBoundSum - recommendedStock), recommendedStock * 0.10);
+        const reorderPoint = recommendedStock * 0.5 + safetyStock;
+
+        const avgVariance = safetyStock / (recommendedStock || 1);
+        let risk = 'Low';
+        if (avgVariance > 0.3) risk = 'High';
+        else if (avgVariance > 0.15) risk = 'Medium';
+
+        dynamicInventory = [
+            {
+                category: 'Primary Forecast Category',
+                recommendedStock: Math.round(recommendedStock),
+                safetyStock: Math.round(safetyStock),
+                reorderPoint: Math.round(reorderPoint),
+                risk
+            }
+        ];
+    } else {
+        // Fallback
+        dynamicInventory = [
+            { category: 'Enterprise Demo', recommendedStock: 2500, safetyStock: 375, reorderPoint: 625, risk: 'Low' },
+            { category: 'Core Product', recommendedStock: 4200, safetyStock: 630, reorderPoint: 1050, risk: 'Medium' }
+        ];
+    }
+
+    if (bi && !bi.error && Object.keys(bi).length > 0) {
+        return {
+            strategies: (bi.strategic_recommendations || []).map(rec => ({
+                name: rec.title || 'Strategic Initiative',
+                description: rec.description,
+                budget: rec.priority === 'high' ? '$25K - $50K' : '$5K - $15K',
+                roi: rec.priority === 'high' ? 'High' : rec.priority === 'medium' ? 'Medium' : 'Low',
+                channels: [(rec.category || 'Operations').toUpperCase(), 'SUPPLY CHAIN'],
+                tactics: [rec.expected_impact || 'Positive ROI', 'Minimize Overstock', 'Ensure Fulfillment']
+            })),
+            inventory: dynamicInventory,
+            actions: {
+                immediate: (bi.action_plan?.[0]?.actions || ['Review forecast bounds']).map(a => ({ action: a, department: 'Operations', impact: 'High' })),
+                shortTerm: (bi.action_plan?.[1]?.actions || ['Align inventory policies']).map(a => ({ action: a, department: 'Strategy', impact: 'Medium' })),
+                strategic: (bi.action_plan?.[2]?.actions || ['Evaluate long-term vendor contracts']).map(a => ({ action: a, department: 'Leadership', impact: 'High' }))
+            }
+        };
+    }
+
+    // Fallback if no backend insights provided
     return {
-        marketing: [
+        strategies: [
             {
-                name: 'High-Performer Amplification Campaign',
-                description: 'Focus marketing resources on products showing strongest demand signals.',
-                budget: '40% of marketing budget',
+                name: 'Data-Driven Procurement',
+                description: 'Leverage the recent ML forecasts to automate procurement processes and reduce manual overhead.',
+                budget: '$10K - $20K',
                 roi: 'High',
-                channels: ['Digital Ads', 'Email', 'Social'],
-                tactics: [
-                    'Create product-specific landing pages optimized for conversion',
-                    'Develop customer testimonial and case study content',
-                    'Implement retargeting campaigns for cart abandoners',
-                    'Launch influencer partnerships for social proof'
-                ]
-            },
-            {
-                name: 'Demand Revival Strategy',
-                description: 'Targeted campaigns to boost underperforming product categories.',
-                budget: '25% of marketing budget',
-                roi: 'Medium',
-                channels: ['Content', 'SEO', 'PR'],
-                tactics: [
-                    'Develop educational content highlighting unique value propositions',
-                    'Launch limited-time promotions and bundle deals',
-                    'Partner with complementary brands for cross-promotion',
-                    'Optimize product descriptions and search visibility'
-                ]
+                channels: ['OPERATIONS', 'SUPPLY CHAIN'],
+                tactics: ['Automate PO generation', 'Set dynamic safety stock', 'Review weekly variance']
             }
         ],
-        inventory: [
-            { category: 'Electronics', recommendedStock: 2500, safetyStock: 375, reorderPoint: 625, risk: 'Low' },
-            { category: 'Clothing', recommendedStock: 4200, safetyStock: 630, reorderPoint: 1050, risk: 'Medium' },
-            { category: 'Food & Beverage', recommendedStock: 8500, safetyStock: 1275, reorderPoint: 2125, risk: 'Low' },
-            { category: 'Home & Garden', recommendedStock: 1800, safetyStock: 270, reorderPoint: 450, risk: 'High' }
-        ],
+        inventory: dynamicInventory,
         actions: {
-            immediate: [
-                { action: 'Increase safety stock for top 5 high-velocity products by 20%', department: 'Operations', impact: 'High' },
-                { action: 'Launch promotional campaign for low-demand products', department: 'Marketing', impact: 'Medium' },
-                { action: 'Review and adjust reorder points based on new forecasts', department: 'Procurement', impact: 'High' }
-            ],
-            shortTerm: [
-                { action: 'Implement dynamic pricing for peak demand periods', department: 'Pricing', impact: 'Medium' },
-                { action: 'Cross-train staff for flexible demand response', department: 'HR', impact: 'Medium' },
-                { action: 'Negotiate flexible supplier agreements', department: 'Procurement', impact: 'High' }
-            ],
-            strategic: [
-                { action: 'Evaluate product portfolio based on demand trends', department: 'Product', impact: 'High' },
-                { action: 'Develop automated inventory replenishment system', department: 'IT', impact: 'Medium' },
-                { action: 'Explore new market segments identified by demand patterns', department: 'Strategy', impact: 'High' }
-            ]
+            immediate: [{ action: 'Review generated forecast against current inventory', department: 'Operations', impact: 'High' }],
+            shortTerm: [{ action: 'Adjust safety stock levels based on ML variance', department: 'Supply Chain', impact: 'Medium' }],
+            strategic: [{ action: 'Integrate ML pipeline with ERP system', department: 'IT / Operations', impact: 'High' }]
         }
     };
 };

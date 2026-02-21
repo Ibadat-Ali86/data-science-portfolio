@@ -14,6 +14,7 @@ import {
     ArrowDownRight,
     Info
 } from 'lucide-react';
+import AnalysisStatCard from './AnalysisStatCard';
 
 /**
  * BusinessInsights - Displays actionable business insights from forecast data
@@ -28,44 +29,51 @@ const BusinessInsights = ({ forecastData, metrics, onContinue }) => {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
         >
-            {/* Executive Summary */}
-            <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl p-6 text-white shadow-xl">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 bg-white/20 rounded-lg">
-                        <Target className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <h2 className="text-2xl font-bold">Executive Summary</h2>
-                        <p className="text-blue-100 text-sm">Key findings from your forecast analysis</p>
-                    </div>
-                </div>
+            {/* Executive Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <AnalysisStatCard
+                    label="Forecasted Demand"
+                    value={insights.executive.forecastedDemand}
+                    icon={<Target className="w-6 h-6" />}
+                    color="blue"
+                    delay={0.1}
+                />
+                <AnalysisStatCard
+                    label="Growth Rate"
+                    value={`${insights.executive.growth > 0 ? '+' : ''
+                        }${Math.abs(insights.executive.growth).toFixed(1)}%`}
+                    icon={insights.executive.growth > 0 ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
+                    color={insights.executive.growth > 0 ? 'green' : 'red'}
+                    delay={0.2}
+                />
+                <AnalysisStatCard
+                    label="Confidence Level"
+                    value={metrics?.confidenceInterval || '95%'}
+                    icon={<Sparkles className="w-6 h-6" />}
+                    color="purple"
+                    delay={0.3}
+                />
+                <AnalysisStatCard
+                    label="Accuracy Rating"
+                    value={insights.executive.accuracy}
+                    icon={<CheckCircle className="w-6 h-6" />}
+                    color="green"
+                    delay={0.4}
+                />
+            </div>
 
-                <div className="bg-white/10 rounded-lg p-4 mb-4">
-                    <h3 className="text-lg font-semibold mb-2">{insights.executive.headline}</h3>
-                    <p className="text-blue-100">{insights.executive.summary}</p>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-white/10 rounded-lg p-3 text-center">
-                        <p className="text-3xl font-bold">{insights.executive.forecastedDemand}</p>
-                        <p className="text-sm text-blue-200">Forecasted Units</p>
-                    </div>
-                    <div className="bg-white/10 rounded-lg p-3 text-center">
-                        <p className={`text-3xl font-bold flex items-center justify-center gap-1 ${insights.executive.growth > 0 ? 'text-green-300' : 'text-red-300'
-                            }`}>
-                            {insights.executive.growth > 0 ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownRight className="w-6 h-6" />}
-                            {Math.abs(insights.executive.growth).toFixed(1)}%
-                        </p>
-                        <p className="text-sm text-blue-200">Growth Rate</p>
-                    </div>
-                    <div className="bg-white/10 rounded-lg p-3 text-center">
-                        <p className="text-3xl font-bold">{metrics?.confidenceInterval || '95%'}</p>
-                        <p className="text-sm text-blue-200">Confidence Level</p>
-                    </div>
-                    <div className="bg-white/10 rounded-lg p-3 text-center">
-                        <p className="text-3xl font-bold">{insights.executive.accuracy}</p>
-                        <p className="text-sm text-blue-200">Forecast Accuracy</p>
-                    </div>
+            {/* Main Headline */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="relative z-10">
+                    <h2 className="text-2xl font-bold mb-2 flex items-center gap-3">
+                        <Sparkles className="w-6 h-6 text-yellow-300" />
+                        Executive Summary
+                    </h2>
+                    <h3 className="text-xl font-medium opacity-90 mb-4">{insights.executive.headline}</h3>
+                    <p className="text-blue-100 leading-relaxed max-w-3xl">
+                        {insights.executive.summary}
+                    </p>
                 </div>
             </div>
 
@@ -263,8 +271,8 @@ const BusinessInsights = ({ forecastData, metrics, onContinue }) => {
  */
 const generateBusinessInsights = (forecastData, metrics) => {
     // If real business insights are provided from backend, use them
-    if (metrics?.business_insights && !metrics.business_insights.error) {
-        const bi = metrics.business_insights;
+    const bi = metrics?.insights || metrics?.business_insights;
+    if (bi && !bi.error && Object.keys(bi).length > 0) {
         return {
             executive: {
                 headline: bi.executive_summary.headline,

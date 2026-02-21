@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForecastAI Intelligence Report - {{ domain_name }}</title>
+    <style>
+        {
+                {
+                css|safe
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                {% if company_logo %}
+                <img src="{{ company_logo }}" alt="{{ company_name }}" style="height: 40px; margin-bottom: 12px;">
+                {% else %}
+                <h1 style="margin-bottom: 4px; color: {{ design.CHART_PALETTE.primary }};">{{ company_name }}</h1>
+                {% endif %}
+                <h2 style="margin: 0; color: {{ design.TEXT_COLORS.primary }};">INTELLIGENCE REPORT</h2>
+                <p style="color: {{ design.TEXT_COLORS.muted }}; margin-top: 8px;">{{ domain_name }} Analysis</p>
+            </div>
+            <div style="text-align: right;">
+                <div class="confidence-badge confidence-high">
+                    {{ design.CONFIDENCE_STYLES.high.icon }} HIGH CONFIDENCE ({{ confidence.overall|format_percent(0)
+                    }})
+                </div>
+                <p
+                    style="font-size: {{ design.FONT_SIZES.caption }}; color: {{ design.TEXT_COLORS.light }}; margin-top: 8px;">
+                    Report ID: {{ report_id }}<br>
+                    Generated: {{ timestamp|format_date('%B %d, %Y at %I:%M %p') }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="section">
+        <h2 style="border-bottom: 2px solid {{ design.CHART_PALETTE.primary }}; padding-bottom: 8px;">EXECUTIVE SUMMARY
+        </h2>
+
+        <p style="font-size: {{ design.FONT_SIZES.body }}; line-height: 1.8;">
+            Based on comprehensive <strong>{{ domain_name }}</strong> data analysis spanning
+            <strong>{{ forecast.date_range if forecast else 'available period' }}</strong>,
+            our AI engine has identified key performance drivers and generated actionable forecasts
+            with <strong>high statistical reliability</strong>.
+        </p>
+
+        <!-- Key Findings at a Glance -->
+        <div class="card"
+            style="background: linear-gradient(135deg, {{ design.BG_COLORS.primary_50 }} 0%, {{ design.BG_COLORS.white }} 100%); border: 2px solid {{ design.BORDER_COLORS.primary }};">
+            <h3 style="margin-top: 0; color: {{ design.CHART_PALETTE.primary }};">KEY FINDINGS AT A GLANCE</h3>
+
+            {% if kpis %}
+            <div class="kpi-grid">
+                {% for kpi in kpis[:3] %}
+                <div class="kpi-card">
+                    <div class="kpi-label">{{ kpi.label }}</div>
+                    <div class="kpi-value">{{ kpi.value|format_number }}</div>
+                    <div
+                        style="font-size: {{ design.FONT_SIZES.caption }}; color: {{ design.TEXT_COLORS.muted }}; margin-top: 4px;">
+                        {{ kpi.change_label if kpi.change_label else '' }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <table style="margin: 16px 0 0 0; border: none;">
+                <tr>
+                    <td style="border: none; font-weight: {{ design.FONT_WEIGHTS.semibold }}; width: 200px;">Data
+                        Quality Score:</td>
+                    <td style="border: none;">
+                        <span
+                            style="color: {{ design.CONFIDENCE_COLORS.high }}; font-weight: {{ design.FONT_WEIGHTS.bold }};">
+                            {{ confidence.data_completeness|format_number(0) }}/100
+                        </span>
+                        <span style="color: {{ design.TEXT_COLORS.light }}; margin-left: 8px;">Excellent</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border: none; font-weight: {{ design.FONT_WEIGHTS.semibold }};">Analysis Confidence:</td>
+                    <td style="border: none;">
+                        <span
+                            style="color: {{ design.CONFIDENCE_COLORS.high }}; font-weight: {{ design.FONT_WEIGHTS.bold }};">
+                            {{ confidence.overall|format_percent(0) }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border: none; font-weight: {{ design.FONT_WEIGHTS.semibold }};">Statistical Power:</td>
+                    <td style="border: none;">
+                        <span style="color: {{ design.CONFIDENCE_COLORS.high }};">
+                            High ({{ confidence.statistical_power|format_number(0) }}/100)
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Critical Business Insights -->
+        <h3 style="margin-top: 24px;">CRITICAL BUSINESS INSIGHTS</h3>
+
+        {% if insights %}
+        <ol style="margin-left: 24px;">
+            {% for insight in insights %}
+            <li style="margin-bottom: 16px;">
+                <strong style="color: {{ design.TEXT_COLORS.primary }};">{{ insight.title }}</strong><br>
+                <span style="color: {{ design.TEXT_COLORS.muted }};">{{ insight.description }}</span>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <div style="margin: 16px 0;">
+            <p><strong style="color: {{ design.TEXT_COLORS.primary }};">1. PERFORMANCE TRAJECTORY</strong></p>
+            <p style="margin-left: 20px; color: {{ design.TEXT_COLORS.muted }};">
+                Analysis shows strong correlation between key drivers and target metrics, with clear actionable patterns
+                identified.
+            </p>
+
+            <p><strong style="color: {{ design.TEXT_COLORS.primary }};">2. GROWTH OPPORTUNITIES</strong></p>
+            <p style="margin-left: 20px; color: {{ design.TEXT_COLORS.muted }};">
+                Data-backed opportunities identified with quantified potential impact on business outcomes.
+            </p>
+
+            <p><strong style="color: {{ design.TEXT_COLORS.primary }};">3. RISK ASSESSMENT</strong></p>
+            <p style="margin-left: 20px; color: {{ design.TEXT_COLORS.muted }};">
+                Key risk factors identified with probability assessment and recommended mitigation strategies.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Recommended Actions -->
+        <h3 style="margin-top: 24px; color: {{ design.CHART_PALETTE.primary }};">RECOMMENDED ACTIONS (Prioritized by
+            Impact)</h3>
+
+        {% if recommendations %}
+        <ol style="margin-left: 24px;">
+            {% for rec in recommendations %}
+            <li style="margin-bottom: 12px;">
+                <strong>{{ rec.action }}</strong>
+                <span style="color: {{ design.TEXT_COLORS.muted }};">→ Expected outcome: {{ rec.outcome }}</span>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <ol style="margin-left: 24px;">
+            <li style="margin-bottom: 12px;">
+                <strong>Immediate Action:</strong> <span style="color: {{ design.TEXT_COLORS.muted }};">Implement
+                    data-driven strategies identified in detailed analysis</span>
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>Short-term (30-60 days):</strong> <span style="color: {{ design.TEXT_COLORS.muted }};">Monitor
+                    KPI trends and adjust based on forecast accuracy</span>
+            </li>
+            <li style="margin-bottom: 12px;">
+                <strong>Strategic (90+ days):</strong> <span style="color: {{ design.TEXT_COLORS.muted }};">Continue
+                    data collection for enhanced long-term forecasting</span>
+            </li>
+        </ol>
+        {% endif %}
+    </div>
+
+    <!-- Page Break -->
+    <div class="page-break"></div>
+
+    <!-- Detailed Analysis -->
+    <div class="section">
+        <h2 style="border-bottom: 2px solid {{ design.CHART_PALETTE.primary }}; padding-bottom: 8px;">DETAILED ANALYSIS
+        </h2>
+
+        {% if charts %}
+        <!-- Forecast Chart -->
+        {% if charts.forecast %}
+        <div style="margin: 24px 0;">
+            <h3>Forecast Trend with Confidence Intervals</h3>
+            <img src="{{ charts.forecast }}" alt="Forecast Trend"
+                style="width: 100%; max-width: 800px; border: 1px solid {{ design.BORDER_COLORS.default }}; border-radius: 8px;">
+            <p
+                style="font-size: {{ design.FONT_SIZES.caption }}; color: {{ design.TEXT_COLORS.light }}; margin-top: 8px; font-style: italic;">
+                Shaded area represents 95% confidence interval. Model accuracy: {{ forecast.accuracy if forecast else
+                'N/A' }}
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Segmentation Breakdown -->
+        {% if charts.segmentation %}
+        <div style="margin: 24px 0;">
+            <h3>Performance by Segment</h3>
+            <img src="{{ charts.segmentation }}" alt="Segmentation"
+                style="width: 100%; max-width: 800px; border: 1px solid {{ design.BORDER_COLORS.default }}; border-radius: 8px;">
+        </div>
+        {% endif %}
+
+        <!-- Correlation Heatmap -->
+        {% if charts.correlation %}
+        <div style="margin: 24px 0;">
+            <h3>Key Driver Correlations</h3>
+            <img src="{{ charts.correlation }}" alt="Correlation Matrix"
+                style="width: 100%; max-width: 800px; border: 1px solid {{ design.BORDER_COLORS.default }}; border-radius: 8px;">
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <!-- Data Sources & Methodology -->
+        <h3 style="margin-top: 32px;">DATA SOURCES & METHODOLOGY</h3>
+
+        <div class="strength-box">
+            {% if strengths %}
+            <ul style="margin: 0;">
+                {% for strength in strengths %}
+                <li>{{ strength }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <ul style="margin: 0;">
+                <li>Complete dataset utilized (no imputations required)</li>
+                <li>Advanced ensemble modeling with cross-validation</li>
+                <li>All statistical assumptions validated</li>
+            </ul>
+            {% endif %}
+        </div>
+
+        {% if matched_columns %}
+        <h4 style="margin-top: 24px;">Column Mapping Quality</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Schema Column</th>
+                    <th>Actual Column</th>
+                    <th>Confidence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for schema_col, (actual_col, conf) in matched_columns.items() %}
+                <tr>
+                    <td style="font-family: {{ design.FONTS.monospace }}; color: {{ design.TEXT_COLORS.tertiary }};">{{
+                        schema_col }}</td>
+                    <td
+                        style="font-family: {{ design.FONTS.monospace }}; font-weight: {{ design.FONT_WEIGHTS.semibold }};">
+                        {{ actual_col }}</td>
+                    <td>
+                        <span
+                            style="color: {{ design.CONFIDENCE_COLORS.high if conf >= 85 else design.CONFIDENCE_COLORS.medium }};">
+                            {{ conf|format_percent(0) }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+
+    <!-- Page Break -->
+    <div class="page-break"></div>
+
+    <!-- Appendix: Technical Specifications -->
+    {% if show_technical_details %}
+    <div class="section">
+        <h2 style="border-bottom: 2px solid {{ design.CHART_PALETTE.primary }}; padding-bottom: 8px;">APPENDIX:
+            TECHNICAL SPECIFICATIONS</h2>
+
+        <h3>Model Configuration</h3>
+        <div class="card">
+            <table style="margin: 0;">
+                <tr>
+                    <td style="border: none; font-weight: {{ design.FONT_WEIGHTS.semibold }}; width: 250px;">Domain:
+                    </td>
+                    <td style="border: none;">{{ domain_name }}</td>
+                </tr>
+                <tr>
+                    <td style="border: none; font-weight: {{ design.FONT_WEIGHTS.semibold }};">Schema Confidence:</td>
+                    <td style="border: none;">{{ confidence.schema_confidence|format_percent(1) }}</td>
+                </tr>
+                <tr>
+                    <td style="border: none; font-weight: {{ design.FONT_WEIGHTS.semibold }};">Data Completeness:</td>
+                    <td style="border: none;">{{ confidence.data_completeness|format_percent(1) }}</td>
+                </tr>
+                <tr>
+                    <td style="border: none; font-weight: {{ design.FONT_WEIGHTS.semibold }};">Statistical Power:</td>
+                    <td style="border: none;">{{ confidence.statistical_power|format_percent(1) }}</td>
+                </tr>
+                <tr>
+                    <td style="border: none; font-weight: {{ design.FONT_WEIGHTS.semibold }};">Business Relevance:</td>
+                    <td style="border: none;">{{ confidence.business_relevance|format_percent(1) }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <h3 style="margin-top: 24px;">Validation Metrics</h3>
+        <p style="color: {{ design.TEXT_COLORS.muted }};">
+            All forecasts validated using industry-standard metrics with cross-validation to ensure statistical
+            robustness.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>
+            <strong>CONFIDENTIAL</strong> | {{ company_name }} Intelligence Report | Report ID: {{ report_id }}
+        </p>
+        <p style="margin-top: 4px;">
+            Generated by ForecastAI - Advanced Analytics Platform | {{ timestamp|format_date('%B %d, %Y') }}
+        </p>
+        <p style="margin-top: 8px; font-size: {{ design.FONT_SIZES.small }};">
+            This report contains proprietary analytical insights. Distribution restricted to authorized recipients only.
+        </p>
+    </div>
+</body>
+
+</html>

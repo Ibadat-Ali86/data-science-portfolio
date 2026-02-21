@@ -44,7 +44,7 @@ function ReloadPrompt() {
                             </h3>
                             <p className="mt-1 text-sm text-slate-400">
                                 {offlineReady
-                                    ? 'ForecastAI has been cached and is ready to use without internet.'
+                                    ? 'AdaptIQ has been cached and is ready to use without internet.'
                                     : 'Click reload to update to the latest version.'}
                             </p>
                             <div className="mt-3 flex gap-3">

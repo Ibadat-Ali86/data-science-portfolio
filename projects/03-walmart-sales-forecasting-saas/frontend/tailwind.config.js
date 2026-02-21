@@ -11,112 +11,98 @@ export default {
                 // Professional typography for business platform
                 sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
                 display: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
-                mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'monospace'],
+                mono: ['JetBrains Mono', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', 'monospace'],
             },
             colors: {
-                // Primary Blue - Conveys trust, stability, intelligence
+                // Brand - Primary Brand Color (Business Indigo)
+                brand: {
+                    50: 'var(--primary-50)',
+                    100: 'var(--primary-100)',
+                    200: 'var(--primary-200)',
+                    300: 'var(--primary-300)',
+                    400: 'var(--primary-400)',
+                    500: 'var(--primary-500)',
+                    600: 'var(--primary-600)',
+                    700: 'var(--primary-700)',
+                    800: 'var(--primary-800)',
+                    900: 'var(--primary-900)',
+                },
+                // Primary - Mapped to Brand for logic consistency
                 primary: {
-                    50: '#EFF6FF',
-                    100: '#DBEAFE',
-                    200: '#BFDBFE',
-                    300: '#93C5FD',
-                    400: '#60A5FA',
-                    500: '#3B82F6',
-                    600: '#2563EB',
-                    700: '#1D4ED8',
-                    800: '#1E40AF',
-                    900: '#1E3A8A',
+                    50: 'var(--primary-50)',
+                    100: 'var(--primary-100)',
+                    200: 'var(--primary-200)',
+                    300: 'var(--primary-300)',
+                    400: 'var(--primary-400)',
+                    500: 'var(--primary-500)',
+                    600: 'var(--primary-600)',
+                    700: 'var(--primary-700)',
+                    800: 'var(--primary-800)',
+                    900: 'var(--primary-900)',
                 },
-                // Secondary - Professional sophistication (Indigo)
+                // Secondary - Mapped to Emerald (Success/Growth)
                 secondary: {
-                    50: '#EEF2FF',
-                    100: '#E0E7FF',
-                    200: '#C7D2FE',
-                    300: '#A5B4FC',
-                    400: '#818CF8',
-                    500: '#6366F1',
-                    600: '#4F46E5',
-                    700: '#4338CA',
-                    800: '#3730A3',
-                    900: '#312E81',
+                    50: 'var(--secondary-50)',
+                    500: 'var(--secondary-500)',
+                    600: 'var(--secondary-600)',
                 },
-                // Light Mode Background Colors
+                // Backgrounds
                 bg: {
-                    primary: '#F9FAFB',    // Main page background
-                    secondary: '#FFFFFF',   // Cards, elevated surfaces
-                    tertiary: '#F3F4F6',    // Subtle sections
-                    elevated: '#FFFFFF',    // Modals, dropdowns
+                    primary: 'var(--bg-primary)',
+                    secondary: 'var(--bg-secondary)',
+                    tertiary: 'var(--bg-tertiary)',
+                    elevated: 'var(--bg-elevated)',
                 },
-                // Light Mode Text Colors
+                surface: {
+                    default: 'var(--bg-secondary)',
+                    subtle: 'var(--bg-tertiary)',
+                },
+                // Text
                 text: {
-                    primary: '#111827',     // Main headings (gray-900)
-                    secondary: '#4B5563',   // Body text (gray-600)
-                    tertiary: '#9CA3AF',    // Muted text (gray-400)
+                    primary: 'var(--text-primary)',
+                    secondary: 'var(--text-secondary)',
+                    tertiary: 'var(--text-tertiary)',
+                    inverse: 'var(--text-inverse)',
                 },
-                // Neutral Gray Scale
+                // Neutrals
                 gray: {
-                    50: '#F9FAFB',
-                    100: '#F3F4F6',
-                    200: '#E5E7EB',
-                    300: '#D1D5DB',
-                    400: '#9CA3AF',
-                    500: '#6B7280',
-                    600: '#4B5563',
-                    700: '#374151',
-                    800: '#1F2937',
-                    900: '#111827',
+                    50: 'var(--gray-50)',
+                    100: 'var(--gray-100)',
+                    200: 'var(--gray-200)',
+                    300: 'var(--gray-300)',
+                    400: 'var(--gray-400)',
+                    500: 'var(--gray-500)',
+                    600: 'var(--gray-600)',
+                    700: 'var(--gray-700)',
+                    800: 'var(--gray-800)',
+                    900: 'var(--gray-900)',
                 },
-                // Success - Growth, positive metrics, profit
+                // Semantic Colors
                 success: {
-                    50: '#ECFDF5',
-                    100: '#D1FAE5',
-                    200: '#A7F3D0',
-                    500: '#10B981',
-                    600: '#059669',
-                    700: '#047857',
+                    50: 'var(--success-50)',
+                    500: 'var(--success-500)',
+                    600: 'var(--success-600)',
                 },
-                // Warning - Caution, attention needed
                 warning: {
-                    50: '#FFFBEB',
-                    100: '#FEF3C7',
-                    200: '#FDE68A',
-                    500: '#F59E0B',
-                    600: '#D97706',
-                    700: '#B45309',
+                    50: 'var(--warning-50)',
+                    500: 'var(--warning-500)',
                 },
-                // Error - Loss, negative metrics, risk
                 error: {
-                    50: '#FEF2F2',
-                    100: '#FEE2E2',
-                    200: '#FECACA',
-                    500: '#EF4444',
-                    600: '#DC2626',
-                    700: '#B91C1C',
+                    50: 'var(--danger-50)',
+                    500: 'var(--danger-500)',
                 },
-                // Info - Neutral information
                 info: {
-                    50: '#EFF6FF',
-                    100: '#DBEAFE',
-                    200: '#BFDBFE',
-                    500: '#3B82F6',
-                    600: '#2563EB',
-                    700: '#1D4ED8',
+                    50: 'var(--info-50)',
+                    500: 'var(--info-500)',
                 },
-                // Data Visualization Palette (Business-friendly)
-                viz: {
-                    primary: '#3B82F6',    // Blue - Main series
-                    secondary: '#10B981',  // Green - Growth/positive
-                    tertiary: '#F59E0B',   // Amber - Caution
-                    quaternary: '#6366F1', // Indigo - Alternative
-                    quinary: '#EC4899',    // Pink - Highlights
-                    senary: '#8B5CF6',     // Purple - Special
-                },
-                // Borders (Light Mode)
+                // Border
                 border: {
-                    primary: '#E5E7EB',    // Standard borders
-                    secondary: '#D1D5DB',  // Emphasized borders
-                    focus: '#3B82F6',      // Focus state
-                    error: '#EF4444',      // Error state
+                    default: 'var(--border-default)',
+                    subtle: 'var(--gray-700)',
+                    primary: 'var(--border-default)',
+                    secondary: 'var(--gray-300)',
+                    focus: 'var(--border-focus)',
+                    error: 'var(--accent-danger)',
                 }
             },
             spacing: {

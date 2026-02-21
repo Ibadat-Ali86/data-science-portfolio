@@ -124,7 +124,7 @@ class MarkdownImputer:
                     # Forward-fill (carry forward 2 weeks max)
                     df.loc[dept_mask, col] = (
                         df.loc[dept_mask, col]
-                        .fillna(method='ffill', limit=2)
+                        .ffill(limit=2)
                     )
                     # Then fill remaining with 0
                     df.loc[dept_mask, col] = df.loc[dept_mask, col].fillna(0)
@@ -258,11 +258,11 @@ class GeneralImputer:
                 df[col] = df[col].fillna(self.column_medians.get(col, df[col].mean()))
                 
             elif strategy == 'ffill':
-                df[col] = df[col].fillna(method='ffill')
-                df[col] = df[col].fillna(method='bfill')
+                df[col] = df[col].ffill()
+                df[col] = df[col].bfill()
                 
             elif strategy == 'ffill_median':
-                df[col] = df[col].fillna(method='ffill', limit=4)
+                df[col] = df[col].ffill(limit=4)
                 df[col] = df[col].fillna(self.column_medians.get(col, df[col].median()))
                 
             elif strategy == 'median':

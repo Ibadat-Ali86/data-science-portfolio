@@ -1,96 +1,103 @@
-/* Ambient Background Animations */
-
-.ambient-background {
+.ambient-canvas {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
+  z-index: -1;
   overflow: hidden;
+  background: var(--bg-primary, #0B0F17);
   pointer-events: none;
-  z-index: 0;
 }
 
-.orb {
+/* Gradient Orbs via Pseudo-elements */
+.ambient-canvas::before,
+.ambient-canvas::after {
+  content: '';
   position: absolute;
   border-radius: 50%;
   filter: blur(80px);
-  opacity: 0.3;
-  animation: float 20s ease-in-out infinite;
+  opacity: 0.4;
+  animation: orb-float calc(20s * var(--motion-enabled, 1)) ease-in-out infinite;
 }
 
-.orb-1 {
-  width: 500px;
-  height: 500px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  top: -10%;
-  left: -10%;
+.ambient-canvas::before {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, var(--accent-brand, #6366F1) 0%, transparent 70%);
+  top: -200px;
+  right: -100px;
   animation-delay: 0s;
-  animation-duration: 25s;
 }
 
-.orb-2 {
+.ambient-canvas::after {
   width: 400px;
   height: 400px;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  bottom: -10%;
-  right: -5%;
-  animation-delay: 5s;
-  animation-duration: 30s;
+  background: radial-gradient(circle, var(--accent-success, #10B981) 0%, transparent 70%);
+  bottom: -100px;
+  left: -100px;
+  animation-delay: -10s;
 }
 
-.orb-3 {
-  width: 350px;
-  height: 350px;
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  top: 40%;
-  right: 10%;
-  animation-delay: 10s;
-  animation-duration: 35s;
+/* Noise Texture Overlay */
+.noise-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
 }
 
-@keyframes float {
-  0%, 100% {
+/* Grid Pattern */
+.grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+}
+
+@keyframes orb-float {
+
+  0%,
+  100% {
     transform: translate(0, 0) scale(1);
   }
+
   25% {
     transform: translate(30px, -30px) scale(1.1);
   }
+
   50% {
-    transform: translate(-20px, 20px) scale(0.9);
+    transform: translate(-20px, 20px) scale(0.95);
   }
+
   75% {
-    transform: translate(40px, 40px) scale(1.05);
+    transform: translate(-30px, -20px) scale(1.05);
   }
 }
 
-/* Mobile optimization - reduce complexity */
+/* Mobile optimization and reduced motion */
 @media (max-width: 768px) {
-  .orb {
-    filter: blur(40px);
-    opacity: 0.2;
+  .ambient-canvas::before {
+    width: 400px;
+    height: 400px;
+    filter: blur(60px);
   }
-  
-  .orb-1 {
+
+  .ambient-canvas::after {
     width: 300px;
     height: 300px;
-  }
-  
-  .orb-2 {
-    width: 250px;
-    height: 250px;
-  }
-  
-  .orb-3 {
-    width: 200px;
-    height: 200px;
+    filter: blur(60px);
   }
 }
 
-/* Reduced motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
-  .orb {
+
+  .ambient-canvas::before,
+  .ambient-canvas::after {
     animation: none;
-    opacity: 0.15;
+    opacity: 0.2;
   }
 }

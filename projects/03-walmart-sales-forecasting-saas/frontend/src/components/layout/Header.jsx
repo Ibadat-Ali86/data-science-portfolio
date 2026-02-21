@@ -1,197 +1,227 @@
-import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Bell, Search, User, Settings, ChevronDown, Check, AlertTriangle, Info, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Bell, Search, Menu, Settings, HelpCircle, User, CheckCircle, AlertTriangle, Book, Keyboard, LifeBuoy, Monitor, Moon, Sun, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import CommandPalette from '../ui/CommandPalette';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '../../context/ThemeContext';
+import FeedbackManager from '../../utils/FeedbackManager';
 
-// Sample notifications data
-const sampleNotifications = [
-    { id: 1, type: 'alert', title: 'Low Stock Alert', message: 'Product A is running low', time: '5m', read: false },
-    { id: 2, type: 'success', title: 'Forecast Ready', message: 'Weekly forecast generated', time: '1h', read: false },
-    { id: 3, type: 'info', title: 'System Update', message: 'New features available', time: '2h', read: true },
-];
+const Header = ({ toggleSidebar, isSidebarCollapsed, onMenuClick }) => {
+    const { user } = useAuth();
+    const { theme, setTheme } = useTheme();
+    const [isCommandOpen, setIsCommandOpen] = useState(false);
 
-const Header = ({ title }) => {
-    const { user, logout } = useAuth();
-    const navigate = useNavigate();
+    // Dropdown states
+    const [activeDropdown, setActiveDropdown] = useState(null); // 'notifications', 'help', 'settings', 'profile'
+    const headerRef = useRef(null);
 
-    const [showDropdown, setShowDropdown] = useState(false);
-    const [showNotifications, setShowNotifications] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [notifications, setNotifications] = useState(sampleNotifications);
-
-    const dropdownRef = useRef(null);
-    const notifRef = useRef(null);
-
-    // Close dropdowns on outside click
+    // Close dropdowns when clicking outside
     useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowDropdown(false);
-            if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifications(false);
+        const handleClickOutside = (event) => {
+            if (headerRef.current && !headerRef.current.contains(event.target)) {
+                setActiveDropdown(null);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleSearch = (e) => {
-        e.preventDefault();
-        if (searchQuery.trim()) {
-            navigate(`/analysis?search=${encodeURIComponent(searchQuery.trim())}`);
-        }
+    const toggleDropdown = (name) => {
+        setActiveDropdown(prev => prev === name ? null : name);
     };
 
-    const markAsRead = (id) => {
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    };
-
-    const unreadCount = notifications.filter(n => !n.read).length;
-
-    const getNotificationIcon = (type) => {
-        switch (type) {
-            case 'alert': return <AlertTriangle className="w-4 h-4" style={{ color: 'var(--accent-red)' }} />;
-            case 'success': return <Check className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />;
-            default: return <Info className="w-4 h-4" style={{ color: 'var(--accent-blue)' }} />;
-        }
-    };
+    // Mock Data
+    const notifications = [
+        { id: 1, type: 'success', title: 'Analysis Complete', desc: 'Walmart Q3 Sales forecast is ready to view.', time: '2m ago' },
+        { id: 2, type: 'warning', title: 'Data Anomaly', desc: 'High volatility detected in electronics category.', time: '1h ago' },
+        { id: 3, type: 'info', title: 'Model Retrained', desc: 'Ensemble model was automatically retrained.', time: '3h ago' }
+    ];
 
     return (
-        <header className="px-6 lg:px-8 py-4 bg-[var(--bg-primary)] sticky top-0 z-40 border-b border-[var(--border-primary)] backdrop-blur-md bg-opacity-90">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
-                        {title}
-                        {unreadCount > 0 && (
-                            <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--accent-red)' }} />
-                        )}
-                    </h1>
-                </div>
+        <header ref={headerRef} className="h-16 px-6 flex items-center justify-between border-b border-slate-200/80 sticky top-0 z-40" style={{ background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+            {/* Left: Mobile Toggle */}
+            <div className="flex items-center gap-4">
+                <button
+                    onClick={onMenuClick || toggleSidebar}
+                    className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                    <Menu className="w-6 h-6" />
+                </button>
+            </div>
 
-                <div className="flex items-center gap-4">
-                    {/* Search */}
-                    <form onSubmit={handleSearch} className="relative hidden lg:block group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors group-focus-within:text-[var(--accent-blue)]"
-                            style={{ color: 'var(--text-tertiary)' }} />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search analysis..."
-                            className="pl-10 pr-4 py-2 w-64 rounded-xl text-sm transition-all focus:w-72 focus:outline-none"
-                            style={{
-                                background: 'var(--bg-secondary)',
-                                border: '1px solid var(--border-primary)',
-                                color: 'var(--text-primary)'
-                            }}
-                        />
-                    </form>
+            {/* Right: Actions */}
+            <div className="flex items-center gap-2 md:gap-4">
+                {/* Search */}
+                <button
+                    onClick={() => setIsCommandOpen(true)}
+                    className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all group"
+                >
+                    <Search className="w-4 h-4" />
+                    <span className="text-sm">Search...</span>
+                    <kbd className="hidden lg:inline-flex h-5 items-center gap-1 rounded border border-slate-200 bg-white px-1.5 font-mono text-[10px] font-medium text-slate-400 group-hover:text-slate-500">
+                        <span className="text-xs">⌘</span>K
+                    </kbd>
+                </button>
+                <button
+                    onClick={() => setIsCommandOpen(true)}
+                    className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+                >
+                    <Search className="w-5 h-5" />
+                </button>
 
-                    {/* Notifications */}
-                    <div ref={notifRef} className="relative">
-                        <button
-                            onClick={() => setShowNotifications(!showNotifications)}
-                            className="relative p-2.5 rounded-xl transition-all hover:bg-[var(--bg-secondary)]"
-                            style={{ color: showNotifications ? 'var(--accent-blue)' : 'var(--text-secondary)' }}
-                        >
-                            <Bell className="w-5 h-5" />
-                            {unreadCount > 0 && (
-                                <span className="absolute top-2 right-2 w-2 h-2 rounded-full ring-2 ring-[var(--bg-primary)]"
-                                    style={{ background: 'var(--accent-red)' }} />
-                            )}
-                        </button>
+                {/* Notifications */}
+                <div className="relative">
+                    <button
+                        onClick={() => toggleDropdown('notifications')}
+                        className={`relative p-2 rounded-full transition-colors ${activeDropdown === 'notifications' ? 'bg-brand-50 text-brand-600' : 'text-slate-500 hover:text-brand-600 hover:bg-brand-50'}`}
+                    >
+                        <Bell className="w-5 h-5" />
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
+                    </button>
 
-                        {showNotifications && (
-                            <div className="absolute right-0 mt-3 w-80 rounded-xl shadow-xl overflow-hidden glass-card animate-in fade-in zoom-in-95 duration-200"
-                                style={{ border: '1px solid var(--border-primary)', background: 'var(--bg-elevated)' }}>
-                                <div className="px-4 py-3 flex justify-between items-center border-b border-[var(--border-primary)]">
-                                    <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>Notifications</h3>
-                                    <span className="text-xs px-2 py-0.5 rounded-full"
-                                        style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
-                                        {unreadCount} New
-                                    </span>
+                    <AnimatePresence>
+                        {activeDropdown === 'notifications' && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden transform origin-top-right"
+                            >
+                                <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                                    <h3 className="font-semibold text-slate-800">Notifications</h3>
+                                    <span className="text-xs text-brand-600 font-medium cursor-pointer hover:underline">Mark all read</span>
                                 </div>
                                 <div className="max-h-80 overflow-y-auto">
-                                    {notifications.map((notif) => (
-                                        <div
-                                            key={notif.id}
-                                            onClick={() => markAsRead(notif.id)}
-                                            className="px-4 py-3 cursor-pointer transition-colors hover:bg-[var(--bg-secondary)] relative group border-b border-[var(--border-primary)] last:border-0"
-                                            style={{ opacity: notif.read ? 0.6 : 1 }}
-                                        >
-                                            <div className="flex gap-3">
-                                                <div className="mt-0.5 p-1.5 rounded-lg h-fit"
-                                                    style={{ background: 'var(--bg-secondary)' }}>
-                                                    {getNotificationIcon(notif.type)}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex justify-between items-start mb-0.5">
-                                                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                                                            {notif.title}
-                                                        </p>
-                                                        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{notif.time}</span>
-                                                    </div>
-                                                    <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
-                                                        {notif.message}
-                                                    </p>
-                                                </div>
+                                    {notifications.map(n => (
+                                        <div key={n.id} className="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer flex gap-3">
+                                            <div className="mt-0.5">
+                                                {n.type === 'success' && <CheckCircle className="w-5 h-5 text-emerald-500" />}
+                                                {n.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-500" />}
+                                                {n.type === 'info' && <Bell className="w-5 h-5 text-blue-500" />}
                                             </div>
-                                            {!notif.read && (
-                                                <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: 'var(--accent-blue)' }} />
-                                            )}
+                                            <div>
+                                                <h4 className="text-sm font-medium text-slate-800">{n.title}</h4>
+                                                <p className="text-xs text-slate-500 mt-0.5">{n.desc}</p>
+                                                <span className="text-[10px] text-slate-400 mt-1 block">{n.time}</span>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
-                            </div>
+                                <div className="px-4 py-2 text-center border-t border-slate-100 bg-slate-50">
+                                    <span className="text-xs text-brand-600 font-medium cursor-pointer hover:underline">View All Activity</span>
+                                </div>
+                            </motion.div>
                         )}
-                    </div>
+                    </AnimatePresence>
+                </div>
 
-                    {/* Settings */}
-                    <button className="p-2.5 rounded-xl transition-all hover:bg-[var(--bg-secondary)]"
-                        style={{ color: 'var(--text-secondary)' }}>
+                {/* Help */}
+                <div className="relative hidden md:block">
+                    <button
+                        onClick={() => toggleDropdown('help')}
+                        className={`p-2 rounded-full transition-colors ${activeDropdown === 'help' ? 'bg-brand-50 text-brand-600' : 'text-slate-500 hover:text-brand-600 hover:bg-brand-50'}`}
+                    >
+                        <HelpCircle className="w-5 h-5" />
+                    </button>
+
+                    <AnimatePresence>
+                        {activeDropdown === 'help' && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden transform origin-top-right p-2"
+                            >
+                                <div className="space-y-1">
+                                    <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors text-left">
+                                        <Book className="w-4 h-4 text-slate-400" />
+                                        Documentation
+                                    </button>
+                                    <button onClick={() => { setIsCommandOpen(true); setActiveDropdown(null); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors text-left">
+                                        <Keyboard className="w-4 h-4 text-slate-400" />
+                                        Keyboard Shortcuts
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            FeedbackManager.showToast('Support requested. A ticket has been opened.', 'success');
+                                            setActiveDropdown(null);
+                                        }}
+                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors text-left border-t border-slate-100 mt-1 pt-3"
+                                    >
+                                        <LifeBuoy className="w-4 h-4 text-slate-400" />
+                                        Contact Support
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Settings */}
+                <div className="relative hidden md:block">
+                    <button
+                        onClick={() => toggleDropdown('settings')}
+                        className={`p-2 rounded-full transition-colors ${activeDropdown === 'settings' ? 'bg-brand-50 text-brand-600' : 'text-slate-500 hover:text-brand-600 hover:bg-brand-50'}`}
+                    >
                         <Settings className="w-5 h-5" />
                     </button>
 
-                    {/* User Profile */}
-                    <div ref={dropdownRef} className="relative pl-2 border-l border-[var(--border-primary)]">
-                        <button
-                            onClick={() => setShowDropdown(!showDropdown)}
-                            className="flex items-center gap-3 p-1.5 rounded-xl transition-all hover:bg-[var(--bg-secondary)]"
-                        >
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg"
-                                style={{ background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))' }}>
-                                <User className="w-4 h-4 text-white" />
-                            </div>
-                            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`}
-                                style={{ color: 'var(--text-secondary)' }} />
-                        </button>
-
-                        {showDropdown && (
-                            <div className="absolute right-0 mt-3 w-48 rounded-xl shadow-xl overflow-hidden glass-card animate-in fade-in zoom-in-95 duration-200"
-                                style={{ border: '1px solid var(--border-primary)', background: 'var(--bg-elevated)' }}>
-                                <div className="px-4 py-3 border-b border-[var(--border-primary)]">
-                                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                                        {user?.full_name || 'User Name'}
-                                    </p>
-                                    <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
-                                        {user?.email || 'user@example.com'}
-                                    </p>
+                    <AnimatePresence>
+                        {activeDropdown === 'settings' && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden transform origin-top-right p-4"
+                            >
+                                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Preferences</h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-slate-700">Theme</span>
+                                        <div className="flex bg-slate-100 rounded-lg p-0.5">
+                                            <button onClick={() => setTheme('light')} className={`p-1 rounded-md ${theme === 'light' ? 'bg-white shadow-sm text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                                                <Sun className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button onClick={() => setTheme('dark')} className={`p-1 rounded-md ${theme === 'dark' ? 'bg-white shadow-sm text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                                                <Moon className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button onClick={() => setTheme('system')} className={`p-1 rounded-md ${theme === 'system' ? 'bg-white shadow-sm text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                                                <Monitor className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-slate-700">Compact View</span>
+                                        <button className="w-8 h-4 bg-emerald-500 rounded-full relative transition-colors"><div className="w-3 h-3 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div></button>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-slate-700">Animations</span>
+                                        <button className="w-8 h-4 bg-emerald-500 rounded-full relative transition-colors"><div className="w-3 h-3 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div></button>
+                                    </div>
                                 </div>
-                                <div className="p-1">
-                                    <button onClick={() => navigate('/profile')}
-                                        className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-[var(--bg-secondary)] flex items-center gap-2"
-                                        style={{ color: 'var(--text-secondary)' }}>
-                                        <User className="w-4 h-4" /> Profile
-                                    </button>
-                                    <button onClick={() => { logout(); navigate('/login'); }}
-                                        className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-[rgba(255,87,87,0.1)] flex items-center gap-2 group"
-                                        style={{ color: 'var(--text-secondary)' }}>
-                                        <X className="w-4 h-4 group-hover:text-[var(--accent-red)]" />
-                                        <span className="group-hover:text-[var(--accent-red)]">Logout</span>
-                                    </button>
-                                </div>
-                            </div>
+                            </motion.div>
                         )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Profile Dropdown */}
+                <div className="ml-2 flex items-center gap-3 pl-4 border-l border-slate-200">
+                    <div className="flex flex-col items-end hidden md:flex">
+                        <span className="text-sm font-medium text-slate-800 leading-none">
+                            {user?.full_name || 'Admin User'}
+                        </span>
+                        <span className="text-xs text-slate-500 mt-1">
+                            Enterprise Plan
+                        </span>
                     </div>
+                    <button className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center text-white font-medium shadow-md hover:shadow-lg transition-all border-2 border-white ring-2 ring-brand-100">
+                        {user?.full_name?.charAt(0) || 'A'}
+                    </button>
                 </div>
             </div>
+
+            {/* Command Palette Modal */}
+            <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
         </header>
     );
 };

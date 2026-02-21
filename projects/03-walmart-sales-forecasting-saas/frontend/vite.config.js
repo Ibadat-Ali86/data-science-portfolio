@@ -10,11 +10,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: 'ForecastAI - Advanced Sales Forecasting',
-        short_name: 'ForecastAI',
+        name: 'AdaptIQ - Advanced Sales Forecasting',
+        short_name: 'AdaptIQ',
         description: 'AI-powered sales forecasting and demand planning for enterprise.',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        theme_color: '#6366F1',
+        background_color: '#F8FAFC',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
@@ -58,6 +58,19 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['framer-motion', 'lucide-react', 'clsx', 'tailwind-merge'],
+          charts: ['recharts', 'chart.js', 'react-chartjs-2'],
+          utils: ['date-fns', 'papaparse', 'jspdf', 'html2canvas']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
+  },
   server: {
     proxy: {
       '/api': {

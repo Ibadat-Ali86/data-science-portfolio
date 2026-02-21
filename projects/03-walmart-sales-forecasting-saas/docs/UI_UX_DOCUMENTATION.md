@@ -2,11 +2,11 @@
 
 <div align="center">
 
-## 🎨 Dark Terminal UI/UX Design System
+## 🎨 Dark Terminal UI/UX Design System → Enterprise Glassmorphism Platform
 
-**Version 2.0 | February 2026**
+**Version 3.0 | February 2026**
 
-*A comprehensive guide to the ForecastAI frontend design system, page layouts, components, color schemes, animations, and user experience patterns.*
+*A comprehensive guide to the AdaptIQ frontend design system, page layouts, components, color schemes, animations, and user experience patterns. v3.0 introduces a unified brand identity, a premium glassmorphism card system, and a multi-layer animated background mesh.*
 
 </div>
 
@@ -30,22 +30,27 @@
 
 ### 1.1 Theme Philosophy
 
-The **Dark Terminal Theme** draws inspiration from:
-- Modern code editors (VS Code, JetBrains)
-- Data science dashboards (Hex, Observable)
-- Terminal/CLI aesthetics
-- Premium SaaS products (Linear, Vercel)
+The **Enterprise Light Theme** (v3.0) provides a clean, professional glassmorphism interface for the main application, while the **Dark Terminal Theme** is retained for the Auth (`/login`, `/register`) and Landing (`/`) pages.
+
+| Page Area | Theme | Background |
+|-----------|-------|------------|
+| Landing / Auth | Dark Terminal | `#0A0E1A` deep navy |
+| Sidebar | Glassmorphism Light | `rgba(255,255,255,0.95)` + `blur(24px)` |
+| Main Layout | Gradient Light | `linear-gradient(135deg, #f8fafc, #f0f4ff, #f8fffe)` |
+| Cards | Frosted Glass | `rgba(255,255,255,0.92)` + `blur(16px)` |
 
 ### 1.2 Key Characteristics
 
 | Characteristic | Implementation |
 |---------------|----------------|
-| **Base Theme** | Dark mode with deep navy (#0A0E1A) foundations |
-| **Visual Depth** | Layered backgrounds with subtle elevation |
+| **Auth Theme** | Dark mode with deep navy (`#0A0E1A`) foundations |
+| **App Theme** | Enterprise Light glassmorphism |
+| **Visual Depth** | Layered backgrounds with subtle elevation and blur |
 | **Data Focus** | Monospace typography for metrics and KPIs |
 | **Interactivity** | Framer Motion animations on all interactions |
-| **Glassmorphism** | Frosted glass effects on modals and overlays |
-| **Gradient Accents** | Blue-to-purple gradients on primary CTAs |
+| **Glassmorphism** | Frosted glass on sidebar, header, cards, and modals |
+| **Gradient Accents** | Brand `#4A9EFF→#B794F6` gradient on logo, CTAs, borders |
+| **Live Background** | `RainbowMeshCursor` — multi-layer gradient blobs tracking the cursor |
 
 ### 1.3 Technology Stack
 
@@ -243,18 +248,34 @@ Hover: scale(1.05), bg: --bg-elevated
 
 ### 5.2 Cards
 
-#### Standard Card (`.card`)
+#### Standard Card (`.card` / `.card-premium`) — v3.0 Upgraded
 ```css
-Background: --bg-secondary
-Border: 1px solid rgba(163,173,191,0.12)
-Border-radius: 12px
-Padding: 24px
-Hover: border-color: rgba(74,158,255,0.3), translateY(-2px)
+/* .card-premium (default for all Card.jsx renders) */
+background: rgba(255, 255, 255, 0.92);
+backdrop-filter: blur(16px);
+-webkit-backdrop-filter: blur(16px);
+border: 1px solid rgba(226, 232, 240, 0.8);
+border-radius: 16px;
+box-shadow: 0 4px 6px -1px rgba(0,0,0,0.04), inset 0 0 0 1px rgba(255,255,255,0.5);
+transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+/* Top gradient border line */
+::before {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #4A9EFF 30%, #B794F6 70%, transparent);
+}
+
+/* Hover state */
+:hover {
+  box-shadow: 0 10px 40px -8px rgba(74,158,255,0.12);
+  border-color: rgba(74,158,255,0.2);
+  transform: translateY(-1px);
+}
 ```
 
 #### Glass Card (`.glass-card`)
 ```css
-Background: rgba(28,35,51,0.6)
+Background: rgba(28,35,51,0.6)   /* Auth/Landing dark theme only */
 Backdrop-filter: blur(24px)
 Border: 1px solid rgba(163,173,191,0.12)
 Box-shadow: inset 0 1px 0 rgba(255,255,255,0.05)
@@ -454,6 +475,7 @@ Height: 64px
 ### 6.4 Dashboard (`/dashboard`)
 
 **Layout:** Sidebar + Main Content
+**Data Source:** Reactive bindings via `FlowContext` to Python `BusinessTranslator` ML outputs.
 
 **Components:**
 1. **Welcome Banner**
@@ -461,10 +483,10 @@ Height: 64px
    - Quick action buttons
 
 2. **KPI Cards Row** (4 columns)
-   - Total Forecasts
-   - Active Sessions
-   - Accuracy Rate
-   - Saved Models
+   - Model MAPE (Mean Absolute Percentage Error)
+   - Projected Savings/Revenue Impact
+   - Systems Optimized (Active Models)
+   - Risk Alerts (Stockouts, Anomalies)
 
 3. **Quick Actions**
    - Start Analysis (primary)
@@ -476,10 +498,10 @@ Height: 64px
    - Timestamps
    - Status badges
 
-5. **System Health**
-   - Backend status
-   - Frontend status
-   - Last sync time
+5. **AI Insights & System Health**
+   - Real-time backend training status via `FlowContext`
+   - Frontend and Backend uptime indicators
+   - Fallback rendering (Mock Data) when pipeline hasn't been executed yet.
 
 ---
 
@@ -536,11 +558,28 @@ Height: 64px
 
 ### 6.7 Reports (`/reports`)
 
+**Features:**
+- Intelligent parsing mapping directly to the `BusinessTranslator` payload.
+- Fallback alerts preventing report generation without a pipeline execution (`analysisResults` check).
+
 **Components:**
-- Report history table
-- Date range filters
-- Export buttons (PDF, CSV)
-- Report preview modal
+- Analysis Summary Hero (Accuracy Rating, Shape, Records)
+- Date range filters and Report Type (Comprehensive, Forecast, Metrics, Insights)
+- Export Format Buttons (PDF, Excel, CSV)
+- PDF Generation logic mapping problem formulations, revenue impact, risks, and strategic action plans to jsPDF buffers.
+
+---
+
+### 6.8 Executive Dashboard (`/executive`)
+
+**Features:**
+- Real-time data consumption directly from `FlowContext.analysisResults`.
+- Reactive alerts populated strictly from the AI models' risk assessment output.
+
+**Components:**
+- 4-Column Business KPI Grid (Revenue Impact, Accuracy vs Target, Model MAPE).
+- Real-time AI Insights Panel (Trends, Opportunities, Action Plans from backend).
+- Dynamic Monitoring Alerts Array (Warnings, Feature Drift).
 
 ---
 
@@ -712,10 +751,99 @@ All text combinations meet WCAG AA standards:
 
 ---
 
+## 10. Phase 13: Brand Unification & Global Effects (v3.0)
+
+### 10.1 AdaptIQ SVG Logo System
+
+**Component:** `AdaptIQLogo.jsx` (`frontend/src/components/ui/`)
+
+```jsx
+// Internal SVG gradient definitions used by the logo
+<linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+  <stop offset="0%" stopColor="#00D9FF" />
+  <stop offset="100%" stopColor="#4A9EFF" />
+</linearGradient>
+```
+
+| Location | Context |
+|----------|---------|
+| `Sidebar.jsx` | App navigation header (w-9 h-9 + `AdaptIQ AI` text + AI badge) |
+| `AuthLayout.jsx` | Login/Register left panel branding |
+
+### 10.2 RainbowMeshCursor — Multi-Layer Blob System
+
+**Component:** `RainbowMeshCursor.jsx` (`frontend/src/components/ui/`)
+
+| Blob | Size | Color | Behavior |
+|------|------|-------|----------|
+| Primary | 800px | `rgba(74,158,255,0.18)` → purple | 7% lerp toward cursor via `requestAnimationFrame` |
+| Ambient | 600px | `rgba(74,222,128,0.07)` | CSS keyframe drift animation |
+| Accent | 500px | `rgba(183,148,246,0.10)` | Reverse drift in top-right |
+
+**Mounted in:** `Layout.jsx` (all authenticated routes) and `AuthLayout.jsx` (auth pages)
+
+### 10.3 Sidebar Architecture (v3.0)
+
+**Active Nav Accent Colors:**
+
+| Page | Accent Color |
+|------|--------------|
+| Dashboard | `#4A9EFF` (Brand Blue) |
+| Upload Data | `#00D9FF` (Cyan) |
+| Analysis | `#B794F6` (Purple) |
+| Monitor | `#4ADE80` (Green) |
+| Forecasts | `#4A9EFF` (Blue) |
+| Scenarios | `#F59E0B` (Amber) |
+| Planning | `#34D399` (Emerald) |
+| Reports | `#F97316` (Orange) |
+| Executive | `#A78BFA` (Violet) |
+
+### 10.4 Glassmorphism Layer Stack
+
+```
+z-index  0: RainbowMeshCursor (fixed, pointer-events: none)
+z-index  0: AnimatedBlobs / ParticleCanvas
+z-index 10: Layout main content area (semi-transparent white)
+z-index 20: Sidebar (bg-white/95 backdrop-blur-xl)
+z-index 40: Header (rgba(255,255,255,0.85) backdrop-blur-20px)
+z-index 50: Modals, CommandPalette, Dropdowns
+```
+
+---
+
+## 📎 Quick Reference
+
+### File Locations
+
+| File | Path | Purpose |
+|------|------|---------|
+| Main CSS | `frontend/src/index.css` | Design system + Phase 13 utilities |
+| AdaptIQLogo | `frontend/src/components/ui/AdaptIQLogo.jsx` | SVG brand mark |
+| RainbowMeshCursor | `frontend/src/components/ui/RainbowMeshCursor.jsx` | Animated mesh background |
+| AnimatedText | `frontend/src/components/ui/AnimatedText.jsx` | Cycling brand headlines |
+| Card | `frontend/src/components/ui/Card.jsx` | Premium glass card base |
+| AuthLayout | `frontend/src/components/auth/AuthLayout.jsx` | Auth wrapper |
+| AuthPage | `frontend/src/pages/auth/AuthPage.jsx` | Login/Register form |
+| Dashboard | `frontend/src/pages/Dashboard.jsx` | Main dashboard |
+| Layout | `frontend/src/components/layout/Layout.jsx` | App wrapper |
+| Sidebar | `frontend/src/components/layout/Sidebar.jsx` | Navigation |
+| Header | `frontend/src/components/layout/Header.jsx` | Top bar |
+
+### Phase 13 CSS Classes
+
+| Class | Purpose |
+|-------|---------|
+| `.card-premium` | Glassmorphism card with gradient top-line |
+| `.dark-autofill` | WebKit autofill override for dark inputs |
+| `.stat-badge-glow` | Glowing status badge (`.success`, `.info`, `.warning`) |
+| `.page-title-premium` | Gradient slate page heading |
+
+---
+
 <div align="center">
 
-Built with ❤️ for ForecastAI
+Built with ❤️ for **AdaptIQ** — Enterprise Demand Forecasting Platform
 
-**Last Updated:** February 2026
+**Last Updated:** February 2026 — v3.0 Enterprise Brand Unification
 
 </div>

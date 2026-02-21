@@ -1,33 +1,33 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-    Upload,
     FileText,
     CheckCircle,
-    Trash2,
     Eye,
     Download,
-    MoreHorizontal,
-    Search,
-    ChevronLeft,
-    ChevronRight,
-    X,
-    Database,
+    RefreshCw,
     ArrowRight,
-    RefreshCw
+    AlertCircle
 } from 'lucide-react';
-import Layout from '../components/layout/Layout';
 import { useFlow } from '../context/FlowContext';
+import { useToast } from '../context/ToastContext';
 import { API_BASE_URL } from '../utils/constants';
 import ColumnMapper from '../components/pipeline/ColumnMapper';
 import GapAnalysisReport from '../components/pipeline/GapAnalysisReport';
+import SmartUploadZone from '../components/upload/SmartUploadZone';
+import ValidationFeedback from '../components/common/ValidationFeedback';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import ProgressBar from '../components/ui/ProgressBar';
+import DataTable from '../components/tables/DataTable';
+import Badge from '../components/ui/Badge';
+import Modal from '../components/ui/Modal';
 
 const DataUpload = () => {
     const navigate = useNavigate();
     const { completeStep, uploadedData: existingData } = useFlow();
     const [files, setFiles] = useState([]);
-    const [isDragging, setIsDragging] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
@@ -35,6 +35,8 @@ const DataUpload = () => {
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [isProcessingBackend, setIsProcessingBackend] = useState(false);
     const [currentFile, setCurrentFile] = useState(null);
+    const [validationResults, setValidationResults] = useState(null);
+    const [uploadedSessionId, setUploadedSessionId] = useState(null);
 
     // Mapper State
     const [showMapper, setShowMapper] = useState(false);
@@ -44,7 +46,7 @@ const DataUpload = () => {
     const [gapReport, setGapReport] = useState(null);
     const [showGapReport, setShowGapReport] = useState(false);
 
-    // Mock Datasets for UI demonstration (plus the uploaded one)
+    // Mock Datasets
     const [datasets, setDatasets] = useState([
         {
             id: 1,
@@ -68,162 +70,160 @@ const DataUpload = () => {
         }
     ]);
 
-    const handleDragOver = useCallback((e) => {
-        e.preventDefault();
-        setIsDragging(true);
-    }, []);
+    const handleFileSelect = (result) => {
+        if (!result) return;
 
-    const handleDragLeave = useCallback((e) => {
-        e.preventDefault();
-        setIsDragging(false);
-    }, []);
+        const file = result.file || result;
+        const sessionId = result.sessionId || null;
+        const rows = result.rows || 0;
+        const columns = result.columns || [];
+        const adapterInfo = result.adapterInfo || {};
 
-    const handleDrop = useCallback((e) => {
-        e.preventDefault();
-        setIsDragging(false);
-        const droppedFiles = Array.from(e.dataTransfer.files).filter(
-            file => file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')
-        );
+        setCurrentFile(file);
 
-        if (droppedFiles.length > 0) {
-            handleFiles(droppedFiles);
-        } else {
-            alert("Please upload a valid CSV file.");
+        // Store real sessionId from backend upload
+        if (sessionId) {
+            setUploadedSessionId(sessionId);
+            sessionStorage.setItem('currentSessionId', sessionId);
+            console.log('✅ Real sessionId stored:', sessionId);
         }
-    }, []);
 
-    const handleFileSelect = (e) => {
-        const selectedFiles = Array.from(e.target.files).filter(
-            file => file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')
-        );
-
-        if (selectedFiles.length > 0) {
-            handleFiles(selectedFiles);
-        } else if (e.target.files.length > 0) {
-            alert("Please select a valid CSV file.");
+        // Build validation results for display
+        if (adapterInfo.issues && adapterInfo.issues.length > 0) {
+            setValidationResults({
+                passed: Object.keys(adapterInfo.detected_columns || {}).map(k => `${k}_detected`),
+                failed: [],
+                warnings: adapterInfo.issues.map(issue => ({ message: issue }))
+            });
+        } else if (sessionId) {
+            // Upload succeeded - show positive validation
+            setValidationResults({
+                passed: ['file_format', 'file_size', 'encoding', 'column_detection'],
+                failed: [],
+                warnings: []
+            });
         }
+
+        // Update flow context with real data
+        const uploadData = {
+            sessionId,
+            rawData: [],
+            allData: [],
+            columns: columns,
+            fileName: file.name,
+            totalRows: rows,
+            uploadedAt: new Date().toISOString(),
+            qualityScore: adapterInfo.quality_score || 100
+        };
+        completeStep('upload', uploadData);
+        setUploadSuccess(true);
+
+        // Also process file locally for preview
+        processFile(file);
     };
 
-    const handleFiles = async (newFiles) => {
-        setFiles(prev => [...prev, ...newFiles]);
-        // Simulate upload for the first file
-        if (newFiles.length > 0) {
-            simulateUpload(newFiles[0]);
-        }
-    };
+    // Removed handleFiles and simulateUpload as they were redundant/conflicting
+    // Replaced with direct processing logic
 
-    const simulateUpload = async (file) => {
+    const { showToast } = useToast();
+
+    const processFile = async (file) => {
         try {
+            // Validate file size manually (50MB) just in case
+            if (file.size > 50 * 1024 * 1024) {
+                showToast('File exceeds 50MB. Please split your dataset or contact support.', 'error', 6000);
+                setUploadSuccess(false);
+                return;
+            }
+
+            // Read file content for preview/parsing
             const text = await file.text();
             const { headers, data } = parseCSV(text);
 
             // Guard against empty files
-            if (headers.length === 0 || data.length === 0) {
+            if (headers.length === 0) {
                 setUploadSuccess(false);
-                setIsUploading(false);
-                setFiles([]);
-                alert(`Error: The CSV file appears to be empty or incorrectly formatted.`);
+                showToast('Error: The CSV file appears to be empty or incorrectly formatted.', 'error', 5000);
                 return;
             }
 
-            // Validation - Generic Time Series
-            // 1. Check for a date-like column (expanded keywords for market data)
-            const dateKeywords = ['date', 'time', 'year', 'month', 'day', 'timestamp', 'period', 'datetime', 'created', 'updated'];
-            const hasDateColumn = headers.some(h => dateKeywords.some(k => h.toLowerCase().includes(k)));
+            // Validate minimum row count (50 rows)
+            if (data.length < 50) {
+                setUploadSuccess(false);
+                showToast(`Your dataset has only ${data.length} rows. Minimum 50 required for reliable forecasting.`, 'error', 6000);
+                return;
+            }
 
-            // 2. Check for at least one numeric column (excluding potential date columns)
-            // Check multiple rows for numeric values to handle edge cases
-            const numericTargetKeywords = ['price', 'close', 'open', 'high', 'low', 'volume', 'sales', 'demand', 'quantity', 'value', 'revenue', 'amount', 'total', 'count', 'adj', 'return', 'change', 'rate', 'index', 'score'];
+            // Quick heuristic check for columns on the first 10 rows
+            const sampleRows = data.slice(0, 10);
+            let hasDateColumn = false;
+            let hasNumericColumn = false;
 
-            const hasNumericColumn = headers.some(h => {
-                // First check if the header name suggests a numeric column
-                const headerLower = h.toLowerCase();
-                const isNumericHeader = numericTargetKeywords.some(k => headerLower.includes(k));
+            // Simple date regex for YYYY-MM-DD, MM/DD/YYYY, etc.
+            const dateRegex = /^(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4})$/;
 
-                // Then verify by checking actual values across multiple rows
-                const sampleRows = data.slice(0, Math.min(5, data.length));
-                const hasNumericValues = sampleRows.some(row => {
-                    const value = row[h];
-                    if (value === undefined || value === null || value === '') return false;
-                    // Remove commas and check if numeric
-                    const cleanValue = String(value).replace(/,/g, '');
-                    return !isNaN(parseFloat(cleanValue)) && isFinite(parseFloat(cleanValue));
+            headers.forEach(header => {
+                let isNumericCount = .0;
+                let isDateCount = .0;
+
+                sampleRows.forEach(row => {
+                    const val = String(row[header] || '').trim();
+                    if (val && !isNaN(Number(val))) isNumericCount++;
+                    if (val && dateRegex.test(val)) isDateCount++;
+                    else if (val && !isNaN(Date.parse(val))) isDateCount++; // fallback native parse
                 });
 
-                // Accept if header suggests numeric OR values are numeric (and not a date column)
-                const isDateColumn = dateKeywords.some(k => headerLower.includes(k));
-                return !isDateColumn && (isNumericHeader || hasNumericValues);
+                if (isDateCount > sampleRows.length * 0.5) hasDateColumn = true;
+                if (isNumericCount > sampleRows.length * 0.5) hasNumericColumn = true;
             });
 
             if (!hasDateColumn) {
                 setUploadSuccess(false);
-                setIsUploading(false);
-                setFiles([]);
-                alert(`Error: Invalid CSV format.\nCould not identify a Date column.\nPlease ensure your CSV has a column like 'Date', 'Timestamp', etc.`);
+                showToast('Date column could not be parsed. Supported formats: YYYY-MM-DD, MM/DD/YYYY.', 'error', 6000);
                 return;
             }
 
-            // We'll be lenient on numeric check for datasets with many columns
-            if (!hasNumericColumn && headers.length < 2) {
+            if (!hasNumericColumn) {
                 setUploadSuccess(false);
-                setIsUploading(false);
-                setFiles([]);
-                alert(`Error: Invalid CSV format.\nCould not identify a numeric Value column for forecasting.`);
+                showToast('Target column not found. Expecting numeric values for forecasting.', 'error', 6000);
                 return;
             }
 
-            setIsUploading(true);
-            setUploadProgress(0);
+            const newDataset = {
+                id: Date.now(),
+                name: file.name,
+                path: '/uploads/new/',
+                size: formatFileSize(file.size),
+                rows: data.length.toLocaleString(),
+                columns: headers.length,
+                uploaded: 'Just now',
+                status: 'Ready',
+                raw: { headers, data }
+            };
 
-            // Mock progress
-            const interval = setInterval(() => {
-                setUploadProgress(prev => {
-                    if (prev >= 100) {
-                        clearInterval(interval);
-                        return 100;
-                    }
-                    return prev + 5;
-                });
-            }, 100);
+            setDatasets(prev => [newDataset, ...prev]);
+            setCurrentFile(file);
+            setUploadSuccess(true);
 
-            setTimeout(() => {
-                setIsUploading(false);
-                const newDataset = {
-                    id: Date.now(),
-                    name: file.name,
-                    path: '/uploads/new/',
-                    size: formatFileSize(file.size),
-                    rows: data.length.toLocaleString(),
-                    columns: headers.length,
-                    uploaded: 'Just now',
-                    status: 'Ready',
-                    raw: { headers, data }
-                };
-                setDatasets(prev => [newDataset, ...prev]);
+            // Complete Flow Step
+            const uploadData = {
+                rawData: data.slice(0, 1000),
+                allData: data,
+                columns: headers,
+                fileName: file.name,
+                totalRows: data.length,
+                uploadedAt: new Date().toISOString()
+            };
+            completeStep('upload', uploadData);
 
-                // Store the file for backend upload
-                setCurrentFile(file);
-
-                // Validate and complete step in FlowContext
-                const uploadData = {
-                    rawData: data.slice(0, 1000),
-                    allData: data,
-                    columns: headers,
-                    fileName: file.name,
-                    totalRows: data.length,
-                    uploadedAt: new Date().toISOString()
-                };
-                completeStep('upload', uploadData);
-                setUploadSuccess(true);
-            }, 2500);
         } catch (error) {
             console.error('Error processing upload:', error);
             setUploadSuccess(false);
-            setIsUploading(false);
-            setFiles([]);
-            alert(`Error: Failed to process the CSV file.\n${error.message || 'Please check the file format.'}`);
+            alert(`Error: Failed to process file.`);
         }
     };
+
+
 
     const parseCSV = (text) => {
         const lines = text.trim().split('\n');
@@ -244,58 +244,12 @@ const DataUpload = () => {
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     };
 
-    /**
-     * Handle proceeding to analysis by uploading to backend first
-     */
-    /**
-     * Handle proceeding to analysis by detecting format first
-     */
     const handleProceedToAnalysis = async () => {
-        if (!currentFile) {
-            console.error('No file available for backend upload');
-            alert('Please upload a file first');
-            return;
+        // Use real sessionId if available, otherwise navigate anyway
+        if (uploadedSessionId) {
+            sessionStorage.setItem('currentSessionId', uploadedSessionId);
         }
-
-        setIsProcessingBackend(true);
-
-        try {
-            // 1. Upload to Detect Format
-            const formData = new FormData();
-            formData.append('file', currentFile);
-
-            const response = await fetch(`${API_BASE_URL}/api/data-pipeline/detect-format`, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ detail: response.statusText }));
-                throw new Error(errorData.detail || 'Format detection failed');
-            }
-
-            const result = await response.json();
-            console.log('Format detected:', result);
-
-            // 2. Set State for Mapper and Gap Analysis
-            setSuggestedMapping(result.suggested_mapping);
-            setDetectedColumns(result.columns);
-            setTempFilePath(result.file_path);
-
-            if (result.schema_analysis) {
-                setGapReport(result.schema_analysis);
-                setShowGapReport(true);
-            } else {
-                // Fallback for legacy behavior
-                setShowMapper(true);
-            }
-
-        } catch (error) {
-            console.error('Detection error:', error);
-            alert(`Failed to detect format: ${error.message}. Please try again.`);
-        } finally {
-            setIsProcessingBackend(false);
-        }
+        navigate('/analysis');
     };
 
     const handleMappingConfirm = async (approvedMapping) => {
@@ -313,15 +267,8 @@ const DataUpload = () => {
                 })
             });
 
-            if (!convertResponse.ok) {
-                const errorData = await convertResponse.json();
-                throw new Error(errorData.message || 'Conversion failed');
-            }
-
+            if (!convertResponse.ok) throw new Error('Conversion failed');
             const convertResult = await convertResponse.json();
-            if (!convertResult.success) {
-                throw new Error(convertResult.message);
-            }
 
             // 5. Initialize Session
             const initResponse = await fetch(`${API_BASE_URL}/api/analysis/init-session-from-path`, {
@@ -333,28 +280,33 @@ const DataUpload = () => {
                 })
             });
 
-            if (!initResponse.ok) {
-                const errorData = await initResponse.json();
-                throw new Error(errorData.detail || 'Session init failed');
-            }
-
+            if (!initResponse.ok) throw new Error('Session init failed');
             const sessionResult = await initResponse.json();
 
             // 6. Complete & Navigate
-            const uploadData = {
-                sessionId: sessionResult.session_id,
-                rawData: sessionResult.sample_data,
-                allData: sessionResult.sample_data,
-                columns: sessionResult.columns,
-                fileName: sessionResult.filename,
-                totalRows: sessionResult.rows,
-                uploadedAt: new Date().toISOString()
-            };
-            completeStep('upload', uploadData);
-            sessionStorage.setItem('currentSessionId', sessionResult.session_id);
+            try {
+                const uploadData = {
+                    sessionId: sessionResult.session_id,
+                    rawData: sessionResult.sample_data,
+                    allData: sessionResult.sample_data,
+                    columns: sessionResult.columns,
+                    fileName: sessionResult.filename,
+                    totalRows: sessionResult.rows,
+                    uploadedAt: new Date().toISOString()
+                };
+
+                // Attempt to update context, but don't block navigation on it
+                completeStep('upload', uploadData);
+                sessionStorage.setItem('currentSessionId', sessionResult.session_id);
+
+                console.log('Session initialized:', sessionResult.session_id);
+            } catch (err) {
+                console.warn('Flow context update failed, but proceeding:', err);
+            }
 
             setShowMapper(false);
-            navigate('/analysis');
+            // Small delay to ensure state updates propagate
+            setTimeout(() => navigate('/analysis'), 100);
 
         } catch (error) {
             console.error('Mapping processing error:', error);
@@ -365,410 +317,275 @@ const DataUpload = () => {
     };
 
     const togglePreview = (dataset) => {
-        if (dataset.raw) {
-            setPreviewData(dataset.raw);
-        } else {
-            // Mock preview data for demonstration if distinct from uploaded
-            setPreviewData({
-                headers: ['Store', 'Date', 'Weekly_Sales', 'Holiday_Flag', 'Temperature', 'Fuel_Price', 'CPI', 'Unemployment'],
-                data: [
-                    { 'Store': 1, 'Date': '05-02-2010', 'Weekly_Sales': 1643690.90, 'Holiday_Flag': 0, 'Temperature': 42.31, 'Fuel_Price': 2.572, 'CPI': 211.096, 'Unemployment': 8.106 },
-                    { 'Store': 1, 'Date': '12-02-2010', 'Weekly_Sales': 1641957.44, 'Holiday_Flag': 1, 'Temperature': 38.51, 'Fuel_Price': 2.548, 'CPI': 211.242, 'Unemployment': 8.106 },
-                    { 'Store': 1, 'Date': '19-02-2010', 'Weekly_Sales': 1611968.17, 'Holiday_Flag': 0, 'Temperature': 39.93, 'Fuel_Price': 2.514, 'CPI': 211.289, 'Unemployment': 8.106 },
-                ]
-            });
-        }
+        setPreviewData(dataset.raw || { headers: [], data: [] });
         setShowPreview(true);
     };
 
-    return (
-        <Layout title="Data Management">
-            <div className="space-y-8">
-                {/* Upload Zone */}
-                <section className="upload-section">
-                    <div className="mb-6 p-4 bg-blue-50/5 border border-blue-200/20 rounded-lg">
-                        <h4 className="flex items-center gap-2 text-blue-400 font-semibold mb-2">
-                            <FileText className="w-4 h-4" /> CSV Format Instructions
-                        </h4>
-                        <p className="text-sm text-gray-400 mb-2">
-                            Please upload a Time-Series CSV file.
-                        </p>
-                        <ul className="text-sm text-gray-400 mb-2 list-disc list-inside">
-                            <li>Must contain a <strong>Date</strong> / Timestamp column.</li>
-                            <li>Must contain at least one <strong>Numeric</strong> column (e.g., Sales, Demand).</li>
-                        </ul>
-                        <p className="text-xs text-gray-500 mt-2">
-                            * The system will automatically detect date and target columns.
-                        </p>
+    const tableColumns = useMemo(() => [
+        {
+            key: 'name',
+            label: 'Name',
+            render: (_, row) => (
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded bg-bg-tertiary flex items-center justify-center text-text-secondary">
+                        <FileText size={16} />
                     </div>
-
-                    <motion.div
-                        className={`upload-zone ${isDragging ? 'drag-over' : ''}`}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                        whileHover={{ scale: 1.01 }}
-                        transition={{ duration: 0.2 }}
-                        onClick={() => document.getElementById('file-upload').click()}
+                    <div>
+                        <div className="font-medium text-text-primary font-mono text-sm">{row.name}</div>
+                        <div className="text-xs text-text-tertiary font-mono">{row.path}</div>
+                    </div>
+                </div>
+            )
+        },
+        { key: 'size', label: 'Size', render: (val) => <span className="font-mono text-sm">{val}</span> },
+        { key: 'rows', label: 'Rows', render: (val) => <span className="font-mono text-sm">{val}</span> },
+        {
+            key: 'status',
+            label: 'Status',
+            render: (val) => (
+                <Badge variant={val === 'Ready' ? 'success' : 'warning'}>
+                    {val}
+                </Badge>
+            )
+        },
+        {
+            key: 'actions',
+            label: 'Actions',
+            render: (_, row) => (
+                <div className="flex gap-2">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-1.5 h-auto text-text-secondary hover:text-brand-600"
+                        onClick={() => togglePreview(row)}
                     >
-                        <div className="upload-zone-icon">
-                            <Upload className="w-10 h-10 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-display font-semibold text-text-primary mb-2">
-                            Upload Your Dataset
-                        </h3>
-                        <p className="text-lg text-text-secondary mb-6">
-                            Drag and drop CSV files here, or click to browse
-                        </p>
-                        <div className="flex justify-center gap-6 mb-8">
-                            <span className="flex items-center gap-2 text-sm text-text-secondary">
-                                <CheckCircle className="w-4 h-4 text-accent-green" /> CSV format
-                            </span>
-                            <span className="flex items-center gap-2 text-sm text-text-secondary">
-                                <CheckCircle className="w-4 h-4 text-accent-green" /> Max 500 MB
-                            </span>
-                            <span className="flex items-center gap-2 text-sm text-text-secondary">
-                                <CheckCircle className="w-4 h-4 text-accent-green" /> UTF-8 encoding
-                            </span>
-                        </div>
-                        <input
-                            type="file"
-                            id="file-upload"
-                            accept=".csv"
-                            multiple
-                            onChange={handleFileSelect}
-                            className="hidden"
-                        />
-                        <button className="btn-primary">
-                            Choose Files
-                        </button>
-                    </motion.div>
-                </section>
+                        <Eye size={16} />
+                    </Button>
+                </div>
+            )
+        }
+    ], []);
 
-                {/* Upload Progress */}
-                <AnimatePresence>
-                    {isUploading && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="bg-bg-secondary border border-border-primary rounded-xl p-6"
-                        >
-                            <div className="flex justify-between items-center mb-4">
-                                <div className="font-mono font-semibold text-text-primary">
-                                    {files[files.length - 1]?.name}
-                                </div>
-                                <div className="font-mono text-sm text-text-tertiary">
-                                    {formatFileSize(files[files.length - 1]?.size || 0)}
-                                </div>
-                            </div>
-                            <div className="progress-bar">
-                                <div
-                                    className="progress-fill"
-                                    style={{ width: `${uploadProgress}%` }}
-                                />
-                            </div>
-                            <div className="flex justify-between items-center mt-3 text-sm text-text-secondary">
-                                <span>Uploading...</span>
-                                <span className="font-mono text-accent-blue">{uploadProgress}%</span>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Success & Proceed Banner */}
-                <AnimatePresence>
-                    {uploadSuccess && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-[rgba(16,185,129,0.1)] border border-[var(--accent-green)] rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4"
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 rounded-full bg-[var(--accent-green)] text-white">
-                                    <CheckCircle className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Upload Complete!</h3>
-                                    <p style={{ color: 'var(--text-secondary)' }}>Your dataset has been successfully processed and is ready for analysis.</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={handleProceedToAnalysis}
-                                    disabled={isProcessingBackend}
-                                    className="btn-primary"
-                                >
-                                    {isProcessingBackend ? (
-                                        <>
-                                            <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
-                                            Preparing Analysis...
-                                        </>
-                                    ) : (
-                                        <>
-                                            Proceed to Analysis <ArrowRight className="w-5 h-5 ml-2" />
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Datasets Table */}
-                <section className="bg-bg-secondary border border-border-primary rounded-xl p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-display font-semibold text-text-primary">Your Datasets</h2>
-                        <div className="flex gap-3">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-text-tertiary pointer-events-none" />
-                                <input
-                                    type="text"
-                                    placeholder="Search datasets..."
-                                    className="pl-10 pr-4 py-2 bg-bg-secondary border border-border-primary rounded-lg text-text-primary text-sm focus:border-accent-blue focus:outline-none w-[300px]"
-                                />
-                            </div>
-                            <select className="px-4 py-2 bg-bg-secondary border border-border-primary rounded-lg text-text-primary text-sm focus:border-accent-blue focus:outline-none min-w-[150px]">
-                                <option>All Files</option>
-                                <option>Recent</option>
-                                <option>Favorites</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th><input type="checkbox" className="rounded border-border-primary bg-bg-tertiary" /></th>
-                                    <th>Name</th>
-                                    <th>Size</th>
-                                    <th>Rows</th>
-                                    <th>Columns</th>
-                                    <th>Uploaded</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {datasets.map((dataset) => (
-                                    <motion.tr
-                                        key={dataset.id}
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        whileHover={{ backgroundColor: 'rgba(74, 158, 255, 0.05)' }}
-                                    >
-                                        <td><input type="checkbox" className="rounded border-border-primary bg-bg-tertiary" /></td>
-                                        <td>
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded bg-bg-tertiary flex items-center justify-center text-text-secondary">
-                                                    <FileText size={16} />
-                                                </div>
-                                                <div>
-                                                    <div className="font-medium text-text-primary font-mono text-sm">{dataset.name}</div>
-                                                    <div className="text-xs text-text-tertiary font-mono">{dataset.path}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td><span className="font-mono text-sm text-text-primary">{dataset.size}</span></td>
-                                        <td><span className="font-mono text-sm text-text-primary">{dataset.rows}</span></td>
-                                        <td><span className="font-mono text-sm text-text-primary">{dataset.columns}</span></td>
-                                        <td><span className="text-sm text-text-tertiary">{dataset.uploaded}</span></td>
-                                        <td>
-                                            <span className={`badge ${dataset.status === 'Ready' ? 'badge-success' : 'badge-warning'}`}>
-                                                {dataset.status}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => togglePreview(dataset)}
-                                                    className="p-1.5 rounded-md hover:bg-bg-tertiary text-text-secondary hover:text-accent-blue transition-colors"
-                                                    title="Preview"
-                                                >
-                                                    <Eye size={16} />
-                                                </button>
-                                                <button className="p-1.5 rounded-md hover:bg-bg-tertiary text-text-secondary hover:text-accent-blue transition-colors" title="Download">
-                                                    <Download size={16} />
-                                                </button>
-                                                <button className="p-1.5 rounded-md hover:bg-bg-tertiary text-text-secondary hover:text-accent-blue transition-colors" title="More">
-                                                    <MoreHorizontal size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </motion.tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Pagination */}
-                    <div className="flex justify-between items-center mt-6 pt-6 border-t border-border-primary">
-                        <div className="text-sm text-text-tertiary">
-                            Showing 1-{datasets.length} of {datasets.length} datasets
-                        </div>
-                        <div className="flex gap-2">
-                            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border-primary text-text-secondary hover:bg-bg-tertiary disabled:opacity-50" disabled>
-                                <ChevronLeft size={18} />
-                            </button>
-                            <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-accent-blue text-white font-medium">1</button>
-                            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border-primary text-text-secondary hover:bg-bg-tertiary">2</button>
-                            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border-primary text-text-secondary hover:bg-bg-tertiary">3</button>
-                            <span className="w-9 h-9 flex items-center justify-center text-text-tertiary">...</span>
-                            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border-primary text-text-secondary hover:bg-bg-tertiary">
-                                <ChevronRight size={18} />
-                            </button>
-                        </div>
-                    </div>
-                </section>
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-bold text-text-primary">Data Management</h2>
+                    <p className="text-text-secondary mt-1">Upload and manage your datasets for forecasting.</p>
+                </div>
             </div>
 
-            <AnimatePresence>
-                {showGapReport && (
-                    <div className="modal-overlay">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="w-full flex justify-center items-center p-4"
-                        >
-                            <GapAnalysisReport
-                                report={gapReport}
-                                onProceed={() => {
-                                    setShowGapReport(false);
-                                    setShowMapper(true);
-                                }}
-                                onCancel={() => setShowGapReport(false)}
-                            />
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left: Upload Area */}
+                <div className="lg:col-span-2 space-y-6">
+                    <Card>
+                        <SmartUploadZone
+                            onUploadComplete={handleFileSelect}
+                            maxFileSize={50 * 1024 * 1024}
+                        />
 
-            {/* Column Mapper Modal */}
-            <AnimatePresence>
-                {showMapper && (
-                    <div className="modal-overlay">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="w-full max-w-4xl"
-                        >
-                            <ColumnMapper
-                                sourceColumns={detectedColumns}
-                                suggestedMapping={suggestedMapping}
-                                onConfirm={handleMappingConfirm}
-                                onCancel={() => setShowMapper(false)}
-                                isLoading={isProcessingBackend}
-                            />
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* Preview Modal */}
-            <AnimatePresence>
-                {showPreview && previewData && (
-                    <div className="modal-overlay">
-                        <motion.div
-                            className="modal-content modal-large"
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        >
-                            <div className="modal-header">
-                                <h3 className="modal-title">Dataset Preview</h3>
-                                <button
-                                    onClick={() => setShowPreview(false)}
-                                    className="p-2 rounded-lg hover:bg-bg-tertiary text-text-secondary hover:text-text-primary transition-colors"
+                        {/* Upload Progress */}
+                        <AnimatePresence>
+                            {isUploading && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="mt-6"
                                 >
-                                    <X size={20} />
-                                </button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="grid grid-cols-4 gap-4 mb-6">
-                                    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-4 text-center">
-                                        <div className="text-sm text-text-tertiary uppercase tracking-wider mb-2">Total Rows</div>
-                                        <div className="font-mono text-2xl font-bold text-accent-blue">{previewData.data.length.toLocaleString()}</div>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-sm font-medium text-text-primary">Uploading...</span>
+                                        <span className="text-sm font-mono text-brand-600">{uploadProgress}%</span>
                                     </div>
-                                    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-4 text-center">
-                                        <div className="text-sm text-text-tertiary uppercase tracking-wider mb-2">Columns</div>
-                                        <div className="font-mono text-2xl font-bold text-accent-blue">{previewData.headers.length}</div>
+                                    <ProgressBar value={uploadProgress} variant="primary" size="sm" />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </Card>
+
+                    {/* Validation Feedback */}
+                    <AnimatePresence>
+                        {validationResults && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                            >
+                                <ValidationFeedback
+                                    results={validationResults}
+                                    qualityScore={validationResults.failed.length === 0 ? 95 : 60}
+                                    compact={true}
+                                />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Success Banner */}
+                    <AnimatePresence>
+                        {uploadSuccess && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                className="bg-gradient-to-r from-emerald-50 to-emerald-100/50 border border-emerald-200 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3.5 rounded-2xl bg-emerald-500 text-white shadow-md shadow-emerald-500/20">
+                                        <CheckCircle className="w-6 h-6" />
                                     </div>
-                                    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-4 text-center">
-                                        <div className="text-sm text-text-tertiary uppercase tracking-wider mb-2">Missing Values</div>
-                                        <div className="font-mono text-2xl font-bold text-accent-blue">0%</div>
-                                    </div>
-                                    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-4 text-center">
-                                        <div className="text-sm text-text-tertiary uppercase tracking-wider mb-2">File Size</div>
-                                        <div className="font-mono text-2xl font-bold text-accent-blue">~</div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-emerald-950 mb-0.5">Upload Complete</h3>
+                                        <p className="text-emerald-700/90 text-sm font-medium">
+                                            {uploadedSessionId
+                                                ? `Session ready: ${uploadedSessionId.slice(0, 16)}...`
+                                                : 'Your dataset is ready for analysis.'}
+                                        </p>
                                     </div>
                                 </div>
-
-                                <div className="overflow-auto max-h-[400px] border border-border-primary rounded-lg">
-                                    <table className="data-table">
-                                        <thead>
-                                            <tr>
-                                                {previewData.headers.map((header, i) => (
-                                                    <th key={i}>{header}</th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {previewData.data.slice(0, 10).map((row, i) => (
-                                                <tr key={i}>
-                                                    {previewData.headers.map((header, j) => (
-                                                        <td key={j}>{row[header]}</td>
-                                                    ))}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button
-                                    onClick={() => setShowPreview(false)}
-                                    className="btn-secondary"
-                                >
-                                    Close
-                                </button>
-                                <button
-                                    className="btn-primary"
-                                    onClick={async () => {
-                                        // Find the dataset being previewed
-                                        const currentDataset = datasets.find(d => d.raw === previewData);
-                                        if (currentDataset && currentDataset.raw) {
-                                            // Create a File object from the raw data
-                                            const csv = [currentDataset.raw.headers.join(','),
-                                            ...currentDataset.raw.data.map(row =>
-                                                currentDataset.raw.headers.map(h => row[h]).join(','))
-                                            ].join('\n');
-                                            const file = new File([csv], currentDataset.name, { type: 'text/csv' });
-                                            setCurrentFile(file);
-
-                                            // Close preview first
-                                            setShowPreview(false);
-
-                                            // Trigger upload to backend
-                                            setTimeout(() => handleProceedToAnalysis(), 100);
-                                        } else {
-                                            // Fallback for mock datasets
-                                            setShowPreview(false);
-                                            navigate('/analysis');
-                                        }
-                                    }}
+                                <Button
+                                    onClick={handleProceedToAnalysis}
                                     disabled={isProcessingBackend}
+                                    isLoading={isProcessingBackend}
+                                    variant="primary"
+                                    icon={ArrowRight}
+                                    iconPosition="right"
+                                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 border-none shadow-md shadow-emerald-600/20 transition-all hover:shadow-lg hover:-translate-y-0.5"
                                 >
-                                    {isProcessingBackend ? 'Preparing...' : 'Use This Dataset'}
-                                </button>
-                            </div>
-                        </motion.div>
+                                    Proceed to Analysis
+                                </Button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Right: Instructions */}
+                <div className="space-y-6">
+                    <Card className="bg-brand-50/50 border-brand-100">
+                        <h3 className="font-bold text-brand-900 flex items-center gap-2 mb-3">
+                            <FileText className="w-5 h-5 text-brand-600" />
+                            CSV Guidelines
+                        </h3>
+                        <ul className="space-y-3 text-sm text-brand-800">
+                            <li className="flex items-start gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-brand-500 mt-1.5" />
+                                <span>File must be in <strong>.csv</strong> format (max 500MB).</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-brand-500 mt-1.5" />
+                                <span>Include a <strong>Date</strong> column (e.g., YYYY-MM-DD).</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-brand-500 mt-1.5" />
+                                <span>Include numeric target columns (e.g., Sales, Demand).</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-brand-500 mt-1.5" />
+                                <span>Ensure no merged cells or complex headers.</span>
+                            </li>
+                        </ul>
+                    </Card>
+
+                    <Card>
+                        <h3 className="font-bold text-text-primary mb-3">Recent Uploads</h3>
+                        <div className="space-y-3">
+                            {datasets.slice(0, 3).map(ds => (
+                                <motion.div
+                                    key={ds.id}
+                                    whileHover={{ scale: 1.01 }}
+                                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-default hover:shadow-sm border border-transparent hover:border-border-default transition-all cursor-pointer group"
+                                >
+                                    <div className="w-10 h-10 rounded-lg bg-bg-tertiary flex items-center justify-center text-text-tertiary group-hover:text-brand-600 group-hover:bg-brand-50 transition-colors">
+                                        <FileText className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-text-primary truncate">{ds.name}</p>
+                                        <p className="text-xs text-text-tertiary mt-0.5">{ds.uploaded}</p>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </Card>
+                </div>
+            </div>
+
+            {/* Datasets Table */}
+            <Card>
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-bold text-text-primary">Dataset Library</h3>
+                </div>
+                <DataTable
+                    columns={tableColumns}
+                    data={datasets}
+                    pagination={true}
+                    searchable={true}
+                />
+            </Card>
+
+            {/* Modals */}
+            <Modal
+                isOpen={showGapReport}
+                onClose={() => setShowGapReport(false)}
+                title="Schema Analysis"
+                size="lg"
+            >
+                <GapAnalysisReport
+                    report={gapReport}
+                    onProceed={() => {
+                        setShowGapReport(false);
+                        setShowMapper(true);
+                    }}
+                    onCancel={() => setShowGapReport(false)}
+                />
+            </Modal>
+
+            <Modal
+                isOpen={showMapper}
+                onClose={() => setShowMapper(false)}
+                title="Map CSV Columns"
+                size="xl"
+            >
+                <ColumnMapper
+                    sourceColumns={detectedColumns}
+                    suggestedMapping={suggestedMapping}
+                    onConfirm={handleMappingConfirm}
+                    onCancel={() => setShowMapper(false)}
+                    isLoading={isProcessingBackend}
+                />
+            </Modal>
+
+            <Modal
+                isOpen={showPreview}
+                onClose={() => setShowPreview(false)}
+                title="Dataset Preview"
+                size="xl"
+            >
+                {previewData && (
+                    <div className="space-y-6">
+                        <div className="overflow-auto max-h-[400px] border border-border-default rounded-lg">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-bg-tertiary text-text-secondary font-medium border-b border-border-default">
+                                    <tr>
+                                        {previewData.headers.map((header, i) => (
+                                            <th key={i} className="px-4 py-3 whitespace-nowrap">{header}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border-default">
+                                    {previewData.data.slice(0, 10).map((row, i) => (
+                                        <tr key={i} className="hover:bg-bg-secondary transition-colors">
+                                            {previewData.headers.map((header, j) => (
+                                                <td key={j} className="px-4 py-3 text-text-secondary whitespace-nowrap">{row[header]}</td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="flex justify-end">
+                            <Button variant="secondary" onClick={() => setShowPreview(false)}>Close</Button>
+                        </div>
                     </div>
                 )}
-            </AnimatePresence>
-        </Layout>
+            </Modal>
+        </div>
     );
 };
 

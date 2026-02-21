@@ -1,0 +1,47 @@
+/**
+ * Custom Tailwind Animations Extension
+ * Add to index.css for custom animations used in components
+ */
+
+@layer utilities {
+
+    /* Shimmer animation for loading states */
+    @keyframes shimmer {
+        0% {
+            background-position: -1000px 0;
+        }
+
+        100% {
+            background-position: 1000px 0;
+        }
+    }
+
+    .animate-shimmer {
+        animation: shimmer 2s infinite;
+        background: linear-gradient(to right,
+                transparent 0%,
+                rgba(255, 255, 255, 0.3) 50%,
+                transparent 100%);
+        background-size: 1000px 100%;
+    }
+
+    /* Gradient text */
+    .text-gradient {
+        @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-brand-400;
+    }
+
+    /* Glassmorphism effect */
+    .glass {
+        @apply bg-white/10 backdrop-blur-xl border border-white/20;
+    }
+
+    /* Scrollbar hide */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+}

@@ -23,40 +23,42 @@ import {
     Rocket
 } from 'lucide-react';
 
-// Slider Component
-const ScenarioSlider = ({ label, value, onChange, min, max, step = 1, unit = '', icon: Icon }) => (
-    <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-            <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                {Icon && <Icon className="w-4 h-4" style={{ color: 'var(--accent-purple)' }} />}
-                {label}
-            </label>
-            <span className="text-xs font-bold px-2 py-1 rounded"
-                style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
-                {value}{unit}
-            </span>
+// Slider Component — with visible colored track and branded thumb
+const ScenarioSlider = ({ label, value, onChange, min, max, step = 1, unit = '', icon: Icon }) => {
+    const pct = ((value - min) / (max - min)) * 100;
+    return (
+        <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                    {Icon && <Icon className="w-4 h-4 text-indigo-500" />}
+                    {label}
+                </label>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 font-mono">
+                    {value}{unit}
+                </span>
+            </div>
+            <div className="relative">
+                <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    step={step}
+                    value={value}
+                    onChange={(e) => onChange(parseFloat(e.target.value))}
+                    className="w-full"
+                    style={{
+                        background: `linear-gradient(90deg, #6366f1 ${pct}%, #e2e8f0 ${pct}%)`,
+                    }}
+                />
+            </div>
+            <div className="flex justify-between text-[10px] mt-1 text-slate-400">
+                <span>{min}{unit}</span>
+                <span>{max}{unit}</span>
+            </div>
         </div>
-        <input
-            type="range"
-            min={min}
-            max={max}
-            step={step}
-            value={value}
-            onChange={(e) => onChange(parseFloat(e.target.value))}
-            className="w-full h-2 rounded-full appearance-none cursor-pointer"
-            style={{
-                background: 'var(--bg-tertiary)',
-                backgroundImage: `linear-gradient(90deg, var(--accent-purple), var(--accent-cyan))`,
-                backgroundSize: `${((value - min) / (max - min)) * 100}% 100%`,
-                backgroundRepeat: 'no-repeat'
-            }}
-        />
-        <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
-            <span>{min}{unit}</span>
-            <span>{max}{unit}</span>
-        </div>
-    </div>
-);
+    );
+};
+
 
 // Result Card Component
 const ResultCard = ({ title, baseline, scenario, unit = '$', positive = true }) => {

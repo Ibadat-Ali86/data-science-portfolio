@@ -1,0 +1,15 @@
+/**
+ * Font Declarations for AdaptIQ Enterprise Theme
+ * Uses Google Fonts CDN for reliable delivery with font-display: swap
+ */
+
+/* ====================================
+   INTER - Primary UI Font
+   ==================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ====================================
+   JETBRAINS MONO - Monospace for Data
+   For metrics, percentages, code display
+   ==================================== */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
