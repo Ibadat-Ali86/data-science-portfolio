@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useTheme } from "../../context/ThemeContext";
 
 /**
  * RainbowMeshCursor — Global mouse-tracking gradient effect.
@@ -6,6 +7,7 @@ import { useEffect, useRef } from "react";
  * Visible on both light and dark backgrounds.
  */
 export default function RainbowMeshCursor() {
+    const { isDark } = useTheme();
     const blobRef = useRef(null);
     const mouse = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
     const smooth = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
@@ -43,7 +45,11 @@ export default function RainbowMeshCursor() {
         <div
             aria-hidden="true"
             className="fixed inset-0 pointer-events-none overflow-hidden"
-            style={{ zIndex: 0 }}
+            style={{
+                zIndex: 0,
+                mixBlendMode: isDark ? 'normal' : 'multiply',
+                opacity: isDark ? 1 : 0.8
+            }}
         >
             {/* Main cursor blob */}
             <div
@@ -55,7 +61,9 @@ export default function RainbowMeshCursor() {
                     width: '800px',
                     height: '800px',
                     borderRadius: '50%',
-                    background: 'radial-gradient(circle at center, rgba(74,158,255,0.18) 0%, rgba(183,148,246,0.12) 30%, rgba(0,217,255,0.07) 55%, transparent 75%)',
+                    background: isDark
+                        ? 'radial-gradient(circle at center, rgba(74,158,255,0.18) 0%, rgba(183,148,246,0.12) 30%, rgba(0,217,255,0.07) 55%, transparent 75%)'
+                        : 'radial-gradient(circle at center, rgba(74,158,255,0.45) 0%, rgba(183,148,246,0.3) 30%, rgba(0,217,255,0.15) 55%, transparent 75%)',
                     filter: 'blur(40px)',
                     willChange: 'transform',
                     pointerEvents: 'none',
@@ -70,7 +78,9 @@ export default function RainbowMeshCursor() {
                     width: '600px',
                     height: '600px',
                     borderRadius: '50%',
-                    background: 'radial-gradient(circle at center, rgba(74,222,128,0.07) 0%, rgba(74,158,255,0.05) 50%, transparent 80%)',
+                    background: isDark
+                        ? 'radial-gradient(circle at center, rgba(74,222,128,0.07) 0%, rgba(74,158,255,0.05) 50%, transparent 80%)'
+                        : 'radial-gradient(circle at center, rgba(74,222,128,0.2) 0%, rgba(74,158,255,0.15) 50%, transparent 80%)',
                     filter: 'blur(60px)',
                     pointerEvents: 'none',
                     animation: 'ambient-drift 20s ease-in-out infinite alternate',
@@ -85,7 +95,9 @@ export default function RainbowMeshCursor() {
                     width: '500px',
                     height: '500px',
                     borderRadius: '50%',
-                    background: 'radial-gradient(circle at center, rgba(183,148,246,0.1) 0%, rgba(74,158,255,0.06) 60%, transparent 80%)',
+                    background: isDark
+                        ? 'radial-gradient(circle at center, rgba(183,148,246,0.1) 0%, rgba(74,158,255,0.06) 60%, transparent 80%)'
+                        : 'radial-gradient(circle at center, rgba(183,148,246,0.25) 0%, rgba(74,158,255,0.15) 60%, transparent 80%)',
                     filter: 'blur(60px)',
                     pointerEvents: 'none',
                     animation: 'ambient-drift 15s ease-in-out infinite alternate-reverse',
